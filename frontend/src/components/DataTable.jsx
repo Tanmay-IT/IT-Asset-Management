@@ -1,4 +1,4 @@
-export function DataTable({ columns, rows, emptyMessage = 'No results found.' }) {
+export function DataTable({ columns, rows, emptyMessage = 'No results found.', onRowClick }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
       <table className="w-full min-w-[640px] text-left text-sm">
@@ -20,7 +20,11 @@ export function DataTable({ columns, rows, emptyMessage = 'No results found.' })
             </tr>
           ) : (
             rows.map((row, index) => (
-              <tr key={row.id ?? index} className="hover:bg-gray-50">
+              <tr
+                key={row.id ?? index}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
+              >
                 {columns.map((col) => (
                   <td key={col.key} className="whitespace-nowrap px-4 py-3 text-gray-700">
                     {col.render ? col.render(row) : row[col.key]}

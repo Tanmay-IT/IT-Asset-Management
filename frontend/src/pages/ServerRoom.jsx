@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
-import { FileUp, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileUp, Pencil, Plus, Server, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
 import { Tag } from '../components/Tag';
 import { ServerRoomFormModal } from '../components/ServerRoomFormModal';
 import { ImportModal } from '../components/ImportModal';
+import { DetailModal } from '../components/DetailModal';
 import { useServerRoomItems } from '../hooks/useServerRoomItems';
+import { getServerRoomStatusColor } from '../lib/serverRoomStatus';
 
 const importPreviewColumns = [
   { key: 'tagNumber', header: 'Tag Number', render: (row) => row.data.tagNumber || '—' },
@@ -20,6 +22,7 @@ export function ServerRoom() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [formState, setFormState] = useState(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
 
   const statusFilters = useMemo(
     () => ['All', ...new Set(items.map((item) => item.status).filter(Boolean))],
@@ -66,7 +69,7 @@ export function ServerRoom() {
     {
       key: 'status',
       header: 'Status',
-      render: (row) => (row.status ? <Tag color="green">{row.status}</Tag> : '—'),
+      render: (row) => (row.status ? <Tag color={getServerRoomStatusColor(row.status)}>{row.status}</Tag> : '—'),
     },
     {
       key: 'problem',
@@ -79,14 +82,20 @@ export function ServerRoom() {
       render: (row) => (
         <div className="flex gap-2">
           <button
-            onClick={() => setFormState({ mode: 'edit', item: row })}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFormState({ mode: 'edit', item: row });
+            }}
             aria-label={`Edit ${row.item}`}
             className="rounded-md border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50"
           >
             <Pencil size={14} />
           </button>
           <button
-            onClick={() => handleDelete(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(row);
+            }}
             aria-label={`Delete ${row.item}`}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
           >
@@ -144,6 +153,7 @@ export function ServerRoom() {
           columns={columns}
           rows={filtered}
           emptyMessage="No server room items yet. Add one manually or import an Excel sheet."
+          onRowClick={setDetailItem}
         />
       )}
 
@@ -162,6 +172,32 @@ export function ServerRoom() {
           previewColumns={importPreviewColumns}
           onClose={() => setIsImportOpen(false)}
           onImported={handleImported}
+        />
+      )}
+
+      {detailItem && (
+        <DetailModal
+          icon={Server}
+          name={detailItem.item || 'Server Room Item'}
+          subtitle={detailItem.model}
+          badge={detailItem.status ? { label: detailItem.status, color: getServerRoomStatusColor(detailItem.status) } : null}
+          onClose={() => setDetailItem(null)}
+          onEdit={() => {
+            setFormState({ mode: 'edit', item: detailItem });
+            setDetailItem(null);
+          }}
+          sections={[
+            {
+              fields: [
+                { label: 'Tag Number', value: detailItem.tagNumber },
+                { label: 'Item', value: detailItem.item },
+                { label: 'Model', value: detailItem.model },
+                { label: 'Serial Number', value: detailItem.serialNumber, mono: true },
+                { label: 'Status', value: detailItem.status },
+                { label: 'Problem', value: detailItem.problem, fullWidth: true },
+              ],
+            },
+          ]}
         />
       )}
     </div>

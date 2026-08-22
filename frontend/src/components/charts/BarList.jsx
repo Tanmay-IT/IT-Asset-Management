@@ -1,10 +1,16 @@
+const BAR_FILL = {
+  red: 'bg-red-500 group-hover:bg-red-600',
+  gray: 'bg-gray-300 group-hover:bg-gray-400',
+  green: 'bg-green-500 group-hover:bg-green-600',
+  orange: 'bg-orange-500 group-hover:bg-orange-600',
+};
+
 /**
- * Horizontal magnitude bars — one hue per the dataviz rules (bar length is
- * the only encoding; color never double-encodes rank). Pass `emphasize` to
- * split bars into an accent/muted 2-tone "this is the point, this is
- * context" reading instead (e.g. low-stock vs healthy).
+ * Horizontal magnitude bars — bar length is the encoding; color is uniform
+ * per the dataviz rules unless `colorFor` is given a real reason to vary it
+ * (emphasis: the point vs context, or a genuine status meaning — never rank).
  */
-export function BarList({ title, subtitle, bars, maxItems = 7, emphasize }) {
+export function BarList({ title, subtitle, bars, maxItems = 7, colorFor }) {
   const sorted = [...bars].sort((a, b) => b.value - a.value);
   const shown = sorted.slice(0, maxItems);
   const hiddenCount = sorted.length - shown.length;
@@ -23,7 +29,7 @@ export function BarList({ title, subtitle, bars, maxItems = 7, emphasize }) {
         <div className="flex flex-1 flex-col justify-center gap-3">
           {shown.map((bar) => {
             const widthPct = Math.max((bar.value / max) * 100, 3);
-            const isAccent = !emphasize || emphasize(bar);
+            const color = colorFor ? colorFor(bar) : 'red';
             return (
               <div key={bar.label} className="group" title={`${bar.label}: ${bar.value}`}>
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs">
@@ -32,9 +38,7 @@ export function BarList({ title, subtitle, bars, maxItems = 7, emphasize }) {
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-r bg-gray-100">
                   <div
-                    className={`h-full rounded-r transition-[width] duration-300 ${
-                      isAccent ? 'bg-red-500 group-hover:bg-red-600' : 'bg-gray-300 group-hover:bg-gray-400'
-                    }`}
+                    className={`h-full rounded-r transition-[width] duration-300 ${BAR_FILL[color] || BAR_FILL.red}`}
                     style={{ width: `${widthPct}%` }}
                   />
                 </div>

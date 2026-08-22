@@ -6,6 +6,7 @@ import { MetricCard } from '../components/MetricCard';
 import { TonerInwardFormModal } from '../components/TonerInwardFormModal';
 import { TonerOutwardFormModal } from '../components/TonerOutwardFormModal';
 import { ImportModal } from '../components/ImportModal';
+import { DetailModal } from '../components/DetailModal';
 import { useTonerInward } from '../hooks/useTonerInward';
 import { useTonerOutward } from '../hooks/useTonerOutward';
 import { computeTonerStock } from '../lib/tonerStock';
@@ -46,6 +47,8 @@ export function Toners() {
   const [inwardForm, setInwardForm] = useState(null);
   const [outwardForm, setOutwardForm] = useState(null);
   const [importMode, setImportMode] = useState(null); // 'inward' | 'outward' | null
+  const [detailInward, setDetailInward] = useState(null);
+  const [detailOutward, setDetailOutward] = useState(null);
 
   const stock = useMemo(() => computeTonerStock(inward, outward), [inward, outward]);
 
@@ -104,14 +107,20 @@ export function Toners() {
       render: (row) => (
         <div className="flex gap-2">
           <button
-            onClick={() => setInwardForm({ mode: 'edit', row })}
+            onClick={(e) => {
+              e.stopPropagation();
+              setInwardForm({ mode: 'edit', row });
+            }}
             className="rounded-md border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50"
             aria-label="Edit inward entry"
           >
             <Pencil size={14} />
           </button>
           <button
-            onClick={() => handleDeleteInward(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteInward(row);
+            }}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
             aria-label="Delete inward entry"
           >
@@ -138,14 +147,20 @@ export function Toners() {
       render: (row) => (
         <div className="flex gap-2">
           <button
-            onClick={() => setOutwardForm({ mode: 'edit', row })}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOutwardForm({ mode: 'edit', row });
+            }}
             className="rounded-md border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50"
             aria-label="Edit outward entry"
           >
             <Pencil size={14} />
           </button>
           <button
-            onClick={() => handleDeleteOutward(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteOutward(row);
+            }}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
             aria-label="Delete outward entry"
           >
@@ -200,7 +215,12 @@ export function Toners() {
         {inwardLoading && <p className="text-sm text-gray-500">Loading inward log...</p>}
         {inwardError && <p className="text-sm text-red-600">Could not load inward log: {inwardError.message}</p>}
         {!inwardLoading && !inwardError && (
-          <DataTable columns={inwardColumns} rows={filteredInward} emptyMessage="No inward toner entries yet." />
+          <DataTable
+            columns={inwardColumns}
+            rows={filteredInward}
+            emptyMessage="No inward toner entries yet."
+            onRowClick={setDetailInward}
+          />
         )}
       </div>
 
@@ -225,7 +245,12 @@ export function Toners() {
         {outwardLoading && <p className="text-sm text-gray-500">Loading outward log...</p>}
         {outwardError && <p className="text-sm text-red-600">Could not load outward log: {outwardError.message}</p>}
         {!outwardLoading && !outwardError && (
-          <DataTable columns={outwardColumns} rows={filteredOutward} emptyMessage="No outward toner entries yet." />
+          <DataTable
+            columns={outwardColumns}
+            rows={filteredOutward}
+            emptyMessage="No outward toner entries yet."
+            onRowClick={setDetailOutward}
+          />
         )}
       </div>
 
@@ -261,6 +286,54 @@ export function Toners() {
           previewColumns={outwardImportColumns}
           onClose={() => setImportMode(null)}
           onImported={(count) => handleImported(count, 'outward')}
+        />
+      )}
+
+      {detailInward && (
+        <DetailModal
+          icon={Printer}
+          name={detailInward.tonerType || 'Inward Entry'}
+          subtitle={detailInward.dateOfOrder}
+          onClose={() => setDetailInward(null)}
+          onEdit={() => {
+            setInwardForm({ mode: 'edit', row: detailInward });
+            setDetailInward(null);
+          }}
+          sections={[
+            {
+              fields: [
+                { label: 'Date of Order', value: detailInward.dateOfOrder },
+                { label: 'Toner Type', value: detailInward.tonerType },
+                { label: 'Inward Qty', value: detailInward.inwardQty },
+                { label: 'Balance', value: detailInward.balance },
+                { label: 'Note', value: detailInward.note, fullWidth: true },
+              ],
+            },
+          ]}
+        />
+      )}
+
+      {detailOutward && (
+        <DetailModal
+          icon={Printer}
+          name={detailOutward.tonerType || 'Outward Entry'}
+          subtitle={detailOutward.deliveredTo}
+          onClose={() => setDetailOutward(null)}
+          onEdit={() => {
+            setOutwardForm({ mode: 'edit', row: detailOutward });
+            setDetailOutward(null);
+          }}
+          sections={[
+            {
+              fields: [
+                { label: 'Date of Order', value: detailOutward.dateOfOrder },
+                { label: 'Toner Type', value: detailOutward.tonerType },
+                { label: 'Delivered To', value: detailOutward.deliveredTo, fullWidth: true },
+                { label: 'Qty Delivered / Used', value: detailOutward.qtyDelivered },
+                { label: 'Date Delivered', value: detailOutward.dateDelivered },
+              ],
+            },
+          ]}
         />
       )}
     </div>

@@ -13,6 +13,7 @@ import { useHddDashboard } from '../hooks/useHddDashboard';
 import { useHddInventory } from '../hooks/useHddInventory';
 import { computeTonerStock } from '../lib/tonerStock';
 import { getFilterBucket } from '../lib/hddStatus';
+import { classifyServerRoomStatus } from '../lib/serverRoomStatus';
 
 const QUICK_LINKS = [
   { to: '/computers', label: 'Computers', icon: Monitor, description: 'Laptops & desktops inventory' },
@@ -153,7 +154,7 @@ export function Dashboard() {
           title="Toner Stock Levels"
           subtitle="Current stock by toner type — low stock highlighted"
           bars={tonerStock.map((entry) => ({ label: entry.tonerType, value: entry.currentStock }))}
-          emphasize={(bar) => tonerStock.find((entry) => entry.tonerType === bar.label)?.isLow}
+          colorFor={(bar) => (tonerStock.find((entry) => entry.tonerType === bar.label)?.isLow ? 'red' : 'gray')}
         />
 
         <StatusBar
@@ -161,7 +162,17 @@ export function Dashboard() {
           subtitle={`${hddStats?.totalHddRecords ?? '—'} total HDD records`}
           segments={hddVerificationSegments}
         />
-        <BarList title="Server Room by Status" subtitle="As recorded in the source data" bars={serverRoomStatusBars} />
+        <BarList
+          title="Server Room by Status"
+          subtitle="As recorded in the source data — non-active in orange"
+          bars={serverRoomStatusBars}
+          colorFor={(bar) => {
+            const state = classifyServerRoomStatus(bar.label);
+            if (state === 'active') return 'green';
+            if (state === 'inactive') return 'orange';
+            return 'gray';
+          }}
+        />
       </div>
 
       <div>

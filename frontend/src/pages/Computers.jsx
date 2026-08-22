@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { FileUp, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FileUp, Monitor, Pencil, Plus, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
 import { Tag } from '../components/Tag';
 import { ComputerFormModal } from '../components/ComputerFormModal';
 import { ImportModal } from '../components/ImportModal';
+import { DetailModal } from '../components/DetailModal';
 import { useComputers } from '../hooks/useComputers';
 
 const typeFilters = ['All', 'Laptop', 'Desktop'];
@@ -27,6 +28,10 @@ const importPreviewColumns = [
   { key: 'type', header: 'Type', render: (row) => row.data.type || '—' },
 ];
 
+function securityTag(enabled) {
+  return <Tag color={enabled ? 'green' : 'gray'}>{enabled ? 'Yes' : 'No'}</Tag>;
+}
+
 export function Computers() {
   const { computers, isLoading, error, addComputer, editComputer, deleteComputer, refetch } = useComputers();
   const [search, setSearch] = useState('');
@@ -34,6 +39,7 @@ export function Computers() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [formState, setFormState] = useState(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [detailComputer, setDetailComputer] = useState(null);
 
   const filtered = useMemo(
     () =>
@@ -119,14 +125,20 @@ export function Computers() {
       render: (row) => (
         <div className="flex gap-2">
           <button
-            onClick={() => setFormState({ mode: 'edit', computer: row })}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFormState({ mode: 'edit', computer: row });
+            }}
             aria-label={`Edit ${row.computerName}`}
             className="rounded-md border border-gray-200 p-1.5 text-gray-500 hover:bg-gray-50"
           >
             <Pencil size={14} />
           </button>
           <button
-            onClick={() => handleDelete(row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(row);
+            }}
             aria-label={`Delete ${row.computerName}`}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
           >
@@ -198,6 +210,7 @@ export function Computers() {
           columns={columns}
           rows={filtered}
           emptyMessage="No computers yet. Add one manually or import an Excel sheet."
+          onRowClick={setDetailComputer}
         />
       )}
 
@@ -218,6 +231,53 @@ export function Computers() {
           previewColumns={importPreviewColumns}
           onClose={() => setIsImportOpen(false)}
           onImported={handleImported}
+        />
+      )}
+
+      {detailComputer && (
+        <DetailModal
+          icon={Monitor}
+          name={detailComputer.computerName || 'Computer'}
+          subtitle={[detailComputer.firstName, detailComputer.lastName].filter(Boolean).join(' ') || 'Unassigned'}
+          badge={
+            detailComputer.status ? { label: detailComputer.status, color: statusColor[detailComputer.status] } : null
+          }
+          onClose={() => setDetailComputer(null)}
+          onEdit={() => {
+            setFormState({ mode: 'edit', computer: detailComputer });
+            setDetailComputer(null);
+          }}
+          sections={[
+            {
+              title: 'Assignment',
+              fields: [
+                { label: 'Assigned To', value: [detailComputer.firstName, detailComputer.lastName].filter(Boolean).join(' ') },
+                { label: 'Email', value: detailComputer.email },
+                { label: 'Department', value: detailComputer.department },
+                { label: 'Branch', value: detailComputer.branch },
+                { label: 'Country', value: detailComputer.country },
+                { label: 'Working Location', value: detailComputer.workingLocation },
+              ],
+            },
+            {
+              title: 'Hardware',
+              fields: [
+                { label: 'Type', value: detailComputer.type },
+                { label: 'Model / Make', value: detailComputer.modelMake },
+                { label: 'Serial No', value: detailComputer.serialNo, mono: true },
+                { label: 'Operating System', value: detailComputer.operatingSystem },
+                { label: 'Edition', value: detailComputer.edition },
+              ],
+            },
+            {
+              title: 'Security',
+              fields: [
+                { label: 'CATO Installed', value: securityTag(detailComputer.catoInstalled) },
+                { label: 'Antivirus', value: securityTag(detailComputer.antivirus) },
+                { label: 'Sophos MDR', value: securityTag(detailComputer.sophosMdr) },
+              ],
+            },
+          ]}
         />
       )}
     </div>
