@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FileUp, Pencil, Plus, Server, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
@@ -6,8 +7,10 @@ import { Tag } from '../components/Tag';
 import { ServerRoomFormModal } from '../components/ServerRoomFormModal';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useServerRoomItems } from '../hooks/useServerRoomItems';
 import { getServerRoomStatusColor } from '../lib/serverRoomStatus';
+import { useToast } from '../hooks/useToast';
 
 const importPreviewColumns = [
   { key: 'tagNumber', header: 'Tag Number', render: (row) => row.data.tagNumber || '—' },
@@ -18,11 +21,14 @@ const importPreviewColumns = [
 
 export function ServerRoom() {
   const { items, isLoading, error, addItem, editItem, deleteItem, refetch } = useServerRoomItems();
-  const [search, setSearch] = useState('');
+  const location = useLocation();
+  const toast = useToast();
+  const [search, setSearch] = useState(() => location.state?.initialQuery || '');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [formState, setFormState] = useState(null);
+  const [formState, setFormState] = useState(() => (location.state?.openAdd ? { mode: 'add' } : null));
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const statusFilters = useMemo(
     () => ['All', ...new Set(items.map((item) => item.status).filter(Boolean))],
@@ -42,15 +48,16 @@ export function ServerRoom() {
     [items, search, statusFilter]
   );
 
-  async function handleDelete(item) {
-    if (!window.confirm(`Remove ${item.item || 'this item'}?`)) return;
-    await deleteItem(item._id);
+  async function confirmDelete() {
+    await deleteItem(deleteTarget._id);
+    toast.success(`${deleteTarget.item || 'Item'} removed.`);
+    setDeleteTarget(null);
   }
 
   function handleImported(insertedCount) {
     setIsImportOpen(false);
     refetch();
-    window.alert(`Imported ${insertedCount} item${insertedCount === 1 ? '' : 's'}.`);
+    toast.success(`Imported ${insertedCount} item${insertedCount === 1 ? '' : 's'}.`);
   }
 
   const columns = [
@@ -94,7 +101,7 @@ export function ServerRoom() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete(row);
+              setDeleteTarget(row);
             }}
             aria-label={`Delete ${row.item}`}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
@@ -198,6 +205,15 @@ export function ServerRoom() {
               ],
             },
           ]}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Remove item?"
+          message={`Remove ${deleteTarget.item || 'this item'}? This can't be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>

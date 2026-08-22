@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FileUp, Monitor, Pencil, Plus, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
@@ -6,7 +7,9 @@ import { Tag } from '../components/Tag';
 import { ComputerFormModal } from '../components/ComputerFormModal';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useComputers } from '../hooks/useComputers';
+import { useToast } from '../hooks/useToast';
 
 const typeFilters = ['All', 'Laptop', 'Desktop'];
 const statusFilters = ['All', 'Active', 'In Repair', 'Retired'];
@@ -34,12 +37,15 @@ function securityTag(enabled) {
 
 export function Computers() {
   const { computers, isLoading, error, addComputer, editComputer, deleteComputer, refetch } = useComputers();
-  const [search, setSearch] = useState('');
+  const location = useLocation();
+  const toast = useToast();
+  const [search, setSearch] = useState(() => location.state?.initialQuery || '');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [formState, setFormState] = useState(null);
+  const [formState, setFormState] = useState(() => (location.state?.openAdd ? { mode: 'add' } : null));
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [detailComputer, setDetailComputer] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const filtered = useMemo(
     () =>
@@ -63,15 +69,16 @@ export function Computers() {
     [computers, search, typeFilter, statusFilter]
   );
 
-  async function handleDelete(computer) {
-    if (!window.confirm(`Remove ${computer.computerName || 'this computer'}?`)) return;
-    await deleteComputer(computer._id);
+  async function confirmDelete() {
+    await deleteComputer(deleteTarget._id);
+    toast.success(`${deleteTarget.computerName || 'Computer'} removed.`);
+    setDeleteTarget(null);
   }
 
   function handleImported(insertedCount) {
     setIsImportOpen(false);
     refetch();
-    window.alert(`Imported ${insertedCount} computer${insertedCount === 1 ? '' : 's'}.`);
+    toast.success(`Imported ${insertedCount} computer${insertedCount === 1 ? '' : 's'}.`);
   }
 
   const columns = [
@@ -137,7 +144,7 @@ export function Computers() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleDelete(row);
+              setDeleteTarget(row);
             }}
             aria-label={`Delete ${row.computerName}`}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
@@ -278,6 +285,15 @@ export function Computers() {
               ],
             },
           ]}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Remove computer?"
+          message={`Remove ${deleteTarget.computerName || 'this computer'}? This can't be undone.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteTarget(null)}
         />
       )}
     </div>

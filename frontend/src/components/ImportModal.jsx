@@ -97,12 +97,36 @@ export function ImportModal({ title, importUrl, previewColumns, onClose, onImpor
 
         {preview && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-gray-600">
-              <span>
-                {preview.summary.total} rows found — {preview.summary.ok} ready, {preview.summary.warnings}{' '}
-                flagged for review
-              </span>
-              <span className="font-medium text-gray-900">{selectedCount} selected</span>
+            <div className="sticky top-0 z-10 -mx-5 -mt-4 flex flex-col gap-2 border-b border-gray-100 bg-white/95 px-5 pb-3 pt-4 backdrop-blur-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-gray-600">
+                <span>
+                  {preview.summary.total} rows found — {preview.summary.ok} ready, {preview.summary.warnings}{' '}
+                  flagged for review
+                </span>
+                <span className="font-medium text-gray-900">{selectedCount} selected</span>
+              </div>
+
+              {confirmError && (
+                <p className="text-sm text-red-600">
+                  Import failed: {confirmError.response?.data?.message || confirmError.message}
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={onClose}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  disabled={isImporting || selectedCount === 0}
+                  className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  {isImporting ? 'Importing...' : `Import ${selectedCount} row${selectedCount === 1 ? '' : 's'}`}
+                </button>
+              </div>
             </div>
 
             {preview.unmappedHeaders.length > 0 && (
@@ -112,28 +136,6 @@ export function ImportModal({ title, importUrl, previewColumns, onClose, onImpor
             )}
 
             <DataTable columns={columns} rows={preview.rows} />
-
-            {confirmError && (
-              <p className="text-sm text-red-600">
-                Import failed: {confirmError.response?.data?.message || confirmError.message}
-              </p>
-            )}
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={onClose}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirm}
-                disabled={isImporting || selectedCount === 0}
-                className="rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-              >
-                {isImporting ? 'Importing...' : `Import ${selectedCount} row${selectedCount === 1 ? '' : 's'}`}
-              </button>
-            </div>
           </>
         )}
       </div>

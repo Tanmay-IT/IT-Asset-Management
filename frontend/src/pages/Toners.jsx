@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { FileUp, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
@@ -7,9 +8,11 @@ import { TonerInwardFormModal } from '../components/TonerInwardFormModal';
 import { TonerOutwardFormModal } from '../components/TonerOutwardFormModal';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useTonerInward } from '../hooks/useTonerInward';
 import { useTonerOutward } from '../hooks/useTonerOutward';
 import { computeTonerStock } from '../lib/tonerStock';
+import { useToast } from '../hooks/useToast';
 
 const inwardImportColumns = [
   { key: 'dateOfOrder', header: 'Date', render: (row) => row.data.dateOfOrder || '—' },
@@ -43,12 +46,18 @@ export function Toners() {
     refetch: refetchOutward,
   } = useTonerOutward();
 
-  const [search, setSearch] = useState('');
-  const [inwardForm, setInwardForm] = useState(null);
-  const [outwardForm, setOutwardForm] = useState(null);
+  const location = useLocation();
+  const toast = useToast();
+  const [search, setSearch] = useState(() => location.state?.initialQuery || '');
+  const [inwardForm, setInwardForm] = useState(() => (location.state?.openAdd === 'inward' ? { mode: 'add' } : null));
+  const [outwardForm, setOutwardForm] = useState(() =>
+    location.state?.openAdd === 'outward' ? { mode: 'add' } : null
+  );
   const [importMode, setImportMode] = useState(null); // 'inward' | 'outward' | null
   const [detailInward, setDetailInward] = useState(null);
   const [detailOutward, setDetailOutward] = useState(null);
+  const [deleteInwardTarget, setDeleteInwardTarget] = useState(null);
+  const [deleteOutwardTarget, setDeleteOutwardTarget] = useState(null);
 
   const stock = useMemo(() => computeTonerStock(inward, outward), [inward, outward]);
 
@@ -75,20 +84,22 @@ export function Toners() {
     [outward, search]
   );
 
-  async function handleDeleteInward(row) {
-    if (!window.confirm(`Remove this inward entry (${row.tonerType || 'toner'})?`)) return;
-    await deleteInward(row._id);
+  async function confirmDeleteInward() {
+    await deleteInward(deleteInwardTarget._id);
+    toast.success(`${deleteInwardTarget.tonerType || 'Inward entry'} removed.`);
+    setDeleteInwardTarget(null);
   }
-  async function handleDeleteOutward(row) {
-    if (!window.confirm(`Remove this outward entry (${row.tonerType || 'toner'})?`)) return;
-    await deleteOutward(row._id);
+  async function confirmDeleteOutward() {
+    await deleteOutward(deleteOutwardTarget._id);
+    toast.success(`${deleteOutwardTarget.tonerType || 'Outward entry'} removed.`);
+    setDeleteOutwardTarget(null);
   }
 
   function handleImported(insertedCount, direction) {
     setImportMode(null);
     if (direction === 'inward') refetchInward();
     else refetchOutward();
-    window.alert(`Imported ${insertedCount} ${direction} entr${insertedCount === 1 ? 'y' : 'ies'}.`);
+    toast.success(`Imported ${insertedCount} ${direction} entr${insertedCount === 1 ? 'y' : 'ies'}.`);
   }
 
   const inwardColumns = [
@@ -119,7 +130,7 @@ export function Toners() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleDeleteInward(row);
+              setDeleteInwardTarget(row);
             }}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
             aria-label="Delete inward entry"
@@ -159,7 +170,7 @@ export function Toners() {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleDeleteOutward(row);
+              setDeleteOutwardTarget(row);
             }}
             className="rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
             aria-label="Delete outward entry"
@@ -334,6 +345,23 @@ export function Toners() {
               ],
             },
           ]}
+        />
+      )}
+
+      {deleteInwardTarget && (
+        <ConfirmDialog
+          title="Remove inward entry?"
+          message={`Remove this inward entry (${deleteInwardTarget.tonerType || 'toner'})? This can't be undone.`}
+          onConfirm={confirmDeleteInward}
+          onCancel={() => setDeleteInwardTarget(null)}
+        />
+      )}
+      {deleteOutwardTarget && (
+        <ConfirmDialog
+          title="Remove outward entry?"
+          message={`Remove this outward entry (${deleteOutwardTarget.tonerType || 'toner'})? This can't be undone.`}
+          onConfirm={confirmDeleteOutward}
+          onCancel={() => setDeleteOutwardTarget(null)}
         />
       )}
     </div>
