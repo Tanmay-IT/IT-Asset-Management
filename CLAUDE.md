@@ -1,0 +1,61 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Stack
+
+MERN stack, split into two independent apps with separate `package.json` files:
+
+- **`/backend`** — Node.js + Express + MongoDB via Mongoose (ES modules, modular `routes/controllers/models/services`)
+- **`/frontend`** — Vite + React + Tailwind CSS v4 (via `@tailwindcss/vite`), modular `components/pages/hooks`
+
+## Commands
+
+Run from within `/backend` or `/frontend` respectively — there is no root-level package.json.
+
+**Backend** (`cd backend`):
+- `npm run dev` — start with `node --watch` (auto-restart on change)
+- `npm start` — start without watch
+- `npm run lint` — ESLint
+- Requires a `.env` file (copy from `.env.example`) with `PORT`, `MONGODB_URI`, `CLIENT_ORIGIN`. A running MongoDB instance is required for the server to start (`connectDB` awaits the connection before listening).
+- `npm run db:start` — runs `scripts/start-local-db.mjs`, a real local MongoDB (via `mongodb-memory-server`, a real `mongod` binary, not a mock) with data persisted on disk under `.local-data/db` (gitignored). This exists because this dev machine has no admin rights (blocks installing MongoDB as a Windows service) and this network firewalls outbound port 27017 (blocks MongoDB Atlas). `.env`'s `MONGODB_URI` points at it (`mongodb://127.0.0.1:27117/itam-air-engine`). Run this in a separate terminal before `npm run dev`/`npm start`; data survives restarts of both the DB process and the backend as long as `.local-data/db` isn't deleted. If a real MongoDB (Atlas reachable from a different network, or a locally installed instance) becomes available later, this can be dropped in favor of just pointing `MONGODB_URI` at it directly.
+- `node scripts/seedHdd.js` — (re-)seeds the HDD Archive's historical data from `src/data/hddSeedData.js` into `HddMainRecord`/`HddDetailSheet`. Only ever touches documents where `isHistorical: true`, so it's safe to re-run without destroying any HDD records a user later creates through the app. Requires the DB to be reachable (`db:start` running).
+
+**Frontend** (`cd frontend`):
+- `npm run dev` — Vite dev server
+- `npm run build` — production build
+- `npm run lint` — oxlint
+- `npm run preview` — preview a production build
+- Optional `.env` (copy from `.env.example`) with `VITE_API_URL`, defaulting to `http://localhost:5000` when unset.
+
+No test runner is configured in either app yet.
+
+## Architecture
+
+**Backend request flow**: `src/server.js` loads env vars, connects to MongoDB (`src/config/db.js`), then calls `createApp()` from `src/app.js` and starts listening. `app.js` wires global middleware (`cors`, `express.json`), mounts all API routes under `/api` (`src/routes/index.js` aggregates per-resource routers, e.g. `computer.routes.js`), then applies `notFound` and `errorHandler` last. Routers call controllers, controllers call services for data access, services use Mongoose models — keep that layering when adding resources rather than querying models directly from controllers.
+
+**Frontend data flow**: pages compose components and call custom hooks for data; hooks own fetch/loading/error state and mutations via the shared `lib/api.js` axios instance rather than pages/components fetching directly. `hooks/useResource.js` is a generic CRUD hook (`{ items, isLoading, error, addItem, editItem, removeItem, refetch }`) parametrized by an `/api/...` endpoint; resource-specific hooks (`useComputers`, `useServerRoomItems`) are thin wrappers over it that rename fields for readability at call sites — add new resources the same way rather than hand-rolling fetch/loading/error state again. `App.jsx` wraps a `react-router-dom` tree in `ErrorBoundary` for render-time failures; routes render inside `components/Layout.jsx` (`Sidebar` + `Header`, with mobile off-canvas nav state). Follow the existing `computer` and `server-room-items` modules (model → service → controller → routes on the backend, `useResource` wrapper → page + form modal on the frontend) as the template when adding a new resource — e.g. Toners, which is currently a frontend-only placeholder (empty state, no backend yet).
+
+No mock/seed data is used anywhere in the frontend — pages render real API data or an empty state, never hardcoded example rows.
+
+**HDD Archive**: a historical data-archive module, architecturally distinct from the plain CRUD resources above — it models *two* related collections instead of one, because the source workbook (`HDD_data_final.xlsx`, transcribed verbatim into `src/data/hddSeedData.js`) has a Main inventory sheet and separate numbered per-drive detail sheets that don't always cleanly correspond 1:1. `HddMainRecord` (one per Main sheet row) and `HddDetailSheet` (one per numbered detail sheet, `hasData: false` for sheets that exist but have no recorded content) are linked by serial-number matching computed once at seed time (`scripts/seedHdd.js`), never inferred at request time — see that script for the two explicit spec-called-out exceptions (a blank-serial detail sheet, a serial-matches-but-name-differs detail sheet) that are linked with a `matchConfidence: 'discrepancy'` flag rather than silently merged. Every field on both models holds the **original** source value verbatim (typos, inconsistent units like `500HB`, non-ISO dates like `28.05.26` included) — `normalizedCapacityGb`/`normalizedDate` are separate derived fields computed only where safely unambiguous (`utils/hddNormalize.js`, shared by the seed script and live edits so they never drift), left `null` otherwise. Both models carry `isHistorical` — `true` for the original seeded transcription, flipped to `false` the moment a record is created or edited through the app (`hdd.service.js`'s `createMainRecord`/`updateMainRecord`/`createDetailSheetForMain`/`updateDetailSheet`) — because `seedHdd.js` only ever deletes/reinserts `isHistorical: true` documents, so a re-seed can never clobber anything a user has added or edited. Add/Edit UI exists (`components/HddFormModal.jsx` for identity fields, `components/HddDriveEditor.jsx` for the nested `drives[].entries[]` structure, edited inline on the detail page) but there is deliberately no Delete — `hdd.service.js`'s `listHddEntities()` groups both collections into one row per logical HDD (a Main record with its linked detail sheet, a Main-only "inventory record", or an unmatched detail sheet) — reuse that grouping rather than querying the two collections separately when adding to this module.
+
+**Toners**: `TonerInward`/`TonerOutward` are two independent collections (not one, since their source columns differ), each plain CRUD + Excel import like `Computer`/`ServerRoomItem` — except outward's `qtyDelivered` is a **string**, not a Number, because the source data mixes real quantities with free text (e.g. `"1 used in HO printer"`); forcing it to a number would silently drop that description. Neither Excel import has duplicate detection (`controllers/tonerImport.controller.js` bypasses `createImportController`'s dedup step) since the same toner type legitimately recurs across unrelated orders/deliveries — there's no natural key to dedupe against. Current stock per toner type is never stored — it's computed on demand (`frontend/src/lib/tonerStock.js`, `computeTonerStock`) as `sum(inward) - sum(outward)`, shared by the Toners page and the main Dashboard's "Low Toner Stock Alerts" card. The low-stock threshold (default 2) is a UI judgment call, not a source value — never hardcode a "reorder point" as if it came from the data. The seed data in `src/data/tonerSeedData.js` was transcribed from a **photo**, not text like the HDD spec — treat it as lower-confidence than the HDD archive's data; it's freely editable/deletable in the app (unlike HDD's historical rows) precisely because of that.
+
+**Excel import**: `Computer` and `ServerRoomItem` both have a bulk-import path for onboarding IGL's existing spreadsheets, separate from the plain CRUD routes. The parsing/mapping logic is generic and shared: `backend/src/utils/excelImportEngine.js` (`parseWorkbook(buffer, fieldDefinitions)` — header aliases matched case/punctuation-insensitively, per-field `transform` for type/boolean values with row-level warnings on unrecognized input) and `backend/src/utils/createImportController.js` (builds the `previewImport`/`confirmImport` Express handlers given a parser, a dedup field, and DB lookup/insert functions). Each resource just supplies its own `FIELD_DEFINITIONS` (see `services/computerImport.service.js` and `services/serverRoomItemImport.service.js`) and wires `POST /:resource/import/preview` (multipart via `multer`, returns a preview without writing to the DB — duplicates flagged by checking the dedup field against existing docs) and `POST /:resource/import/confirm` (bulk-inserts the reviewed/filtered rows via `insertMany`). The frontend mirrors this generically too: `hooks/useResourceImport.js` + `components/ImportModal.jsx` (parametrized by `importUrl` and per-resource `previewColumns`) — upload → review flagged rows with per-row include/exclude checkboxes, duplicates unchecked by default → confirm. Follow this same pattern (new `FIELD_DEFINITIONS` + `previewColumns`, not new parsing/preview logic) when adding import for another resource.
+
+## Conventions to enforce
+
+### ES modules only
+Use `import`/`export` syntax everywhere, in both `/backend` and `/frontend`. Do not use `require`/`module.exports`. Backend `package.json` should set `"type": "module"`.
+
+### Modular folder structure
+- **Backend**: separate `routes/`, `controllers/`, `models/`, and `services/` — routes define endpoints and delegate to controllers, controllers handle request/response and call services for business logic, models define Mongoose schemas. Avoid putting business logic directly in route handlers.
+- **Frontend**: separate `components/`, `pages/`, and `hooks/` — components are reusable/presentational, pages compose components for a route, hooks encapsulate reusable stateful logic. Avoid god-components that mix data fetching, business logic, and layout.
+
+### Mobile-first responsive design
+Write Tailwind classes unprefixed for the base (mobile) layout, then layer in `sm:`, `md:`, `lg:`, `xl:` for larger breakpoints. Don't design for desktop first and retrofit mobile styles.
+
+### Error handling
+- **Backend**: wrap async route/controller logic in try/catch (or an async-handler wrapper) and forward errors via `next(err)` to a centralized Express error-handling middleware — don't let unhandled errors crash the process or leak stack traces to clients.
+- **Frontend**: use React error boundaries for render-time failures, and handle async/fetch errors explicitly (loading/error states) rather than letting promises reject silently.
