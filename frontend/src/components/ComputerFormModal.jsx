@@ -73,36 +73,36 @@ export function ComputerFormModal({ onClose, onSubmit, initialValues }) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {textFields.map(({ key, label, type = 'text' }) => (
-            <label key={key} className="text-sm text-gray-600">
+            <label key={key} className="text-sm text-gray-600 dark:text-gray-400">
               {label}
               <input
                 type={type}
                 value={form[key]}
                 onChange={handleChange(key)}
                 autoFocus={key === 'firstName'}
-                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+                className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
               />
             </label>
           ))}
 
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
             Desktop/Laptop
             <select
               value={form.type}
               onChange={handleChange('type')}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="Laptop">Laptop</option>
               <option value="Desktop">Desktop</option>
             </select>
           </label>
 
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
             Status
             <select
               value={form.status}
               onChange={handleChange('status')}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="Active">Active</option>
               <option value="In Repair">In Repair</option>
@@ -113,12 +113,12 @@ export function ComputerFormModal({ onClose, onSubmit, initialValues }) {
 
         <div className="flex flex-wrap gap-4">
           {checkboxFields.map(({ key, label }) => (
-            <label key={key} className="flex items-center gap-2 text-sm text-gray-600">
+            <label key={key} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <input
                 type="checkbox"
                 checked={form[key]}
                 onChange={handleCheckbox(key)}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
               />
               {label}
             </label>

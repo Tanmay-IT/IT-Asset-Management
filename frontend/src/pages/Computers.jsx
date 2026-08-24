@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Download, FileUp, Monitor, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Download, FileUp, Monitor, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
 import { Tag } from '../components/Tag';
@@ -71,6 +71,8 @@ export function Computers() {
   const [search, setSearch] = useState(() => location.state?.initialQuery || '');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [deptFilter, setDeptFilter] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
   const [formState, setFormState] = useState(() => (location.state?.openAdd ? { mode: 'add' } : null));
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [detailComputer, setDetailComputer] = useState(null);
@@ -85,11 +87,22 @@ export function Computers() {
     setTimeout(() => setHighlightedId((current) => (current === id ? null : current)), 1800);
   }
 
+  const deptOptions = useMemo(
+    () => [...new Set(computers.map((c) => (c.department || '').trim()).filter(Boolean))].sort(),
+    [computers]
+  );
+  const branchOptions = useMemo(
+    () => [...new Set(computers.map((c) => (c.branch || '').trim()).filter(Boolean))].sort(),
+    [computers]
+  );
+
   const filtered = useMemo(
     () =>
       computers.filter((computer) => {
         const matchesType = typeFilter === 'All' || computer.type === typeFilter;
         const matchesStatus = statusFilter === 'All' || computer.status === statusFilter;
+        const matchesDept = !deptFilter || (computer.department || '').trim() === deptFilter;
+        const matchesBranch = !branchFilter || (computer.branch || '').trim() === branchFilter;
         const haystack = [
           computer.computerName,
           computer.firstName,
@@ -102,10 +115,17 @@ export function Computers() {
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
-        return matchesType && matchesStatus && haystack.includes(search.toLowerCase());
+        return matchesType && matchesStatus && matchesDept && matchesBranch && haystack.includes(search.toLowerCase());
       }),
-    [computers, search, typeFilter, statusFilter]
+    [computers, search, typeFilter, statusFilter, deptFilter, branchFilter]
   );
+
+  const activeFilterChips = [
+    typeFilter !== 'All' && { key: 'type', label: `Type: ${typeFilter}`, clear: () => setTypeFilter('All') },
+    statusFilter !== 'All' && { key: 'status', label: `Status: ${statusFilter}`, clear: () => setStatusFilter('All') },
+    deptFilter && { key: 'dept', label: `Department: ${deptFilter}`, clear: () => setDeptFilter('') },
+    branchFilter && { key: 'branch', label: `Branch: ${branchFilter}`, clear: () => setBranchFilter('') },
+  ].filter(Boolean);
 
   async function confirmDelete() {
     await deleteComputer(deleteTarget._id);
@@ -245,20 +265,20 @@ export function Computers() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Computers</h1>
+        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">Computers</h1>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchBar value={search} onChange={setSearch} placeholder="Search device, user, serial..." />
-          <div className="flex flex-wrap gap-2">
+          <div className="no-print flex flex-wrap gap-2">
             <ColumnVisibilityMenu columns={TOGGLEABLE_COLUMNS} hiddenKeys={hiddenColumns} onChange={setHiddenColumns} />
             <button
               onClick={handleExport}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <Download size={16} /> Export CSV
             </button>
             <button
               onClick={() => setIsImportOpen(true)}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <FileUp size={16} /> Import Excel
             </button>
@@ -272,15 +292,17 @@ export function Computers() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+      <div className="no-print flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-400">Type</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Type</span>
           {typeFilters.map((type) => (
             <button
               key={type}
               onClick={() => setTypeFilter(type)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                typeFilter === type ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                typeFilter === type
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               {type}
@@ -288,26 +310,91 @@ export function Computers() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-400">Status</span>
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Status</span>
           {statusFilters.map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                statusFilter === status ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                statusFilter === status
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               {status}
             </button>
           ))}
         </div>
+        {deptOptions.length > 0 && (
+          <label className="flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-500">
+            Department
+            <select
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-700 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            >
+              <option value="">All</option>
+              {deptOptions.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {branchOptions.length > 0 && (
+          <label className="flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-gray-500">
+            Branch
+            <select
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-700 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+            >
+              <option value="">All</option>
+              {branchOptions.map((branch) => (
+                <option key={branch} value={branch}>
+                  {branch}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </div>
 
-      <BulkActionsBar
-        count={selectedIds.size}
-        onClear={() => setSelectedIds(new Set())}
-        actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOpen(true) }]}
-      />
+      {activeFilterChips.length > 0 && (
+        <div className="no-print flex flex-wrap items-center gap-2">
+          {activeFilterChips.map((chip) => (
+            <button
+              key={chip.key}
+              onClick={chip.clear}
+              type="button"
+              className="flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/70"
+            >
+              {chip.label} <X size={12} />
+            </button>
+          ))}
+          <button
+            onClick={() => {
+              setTypeFilter('All');
+              setStatusFilter('All');
+              setDeptFilter('');
+              setBranchFilter('');
+            }}
+            type="button"
+            className="text-xs font-medium text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+      <div className="no-print sticky top-14 z-20 -mx-4 bg-gray-50 px-4 py-1 sm:-mx-6 sm:px-6 dark:bg-gray-950">
+        <BulkActionsBar
+          count={selectedIds.size}
+          onClear={() => setSelectedIds(new Set())}
+          actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOpen(true) }]}
+        />
+      </div>
 
       {error && <p className="text-sm text-red-600">Could not load computers: {error.message}</p>}
       {!error && (
@@ -316,6 +403,7 @@ export function Computers() {
           rows={filtered}
           isLoading={isLoading}
           emptyMessage="No computers yet. Add one manually or import an Excel sheet."
+          emptyIcon={Monitor}
           onRowClick={setDetailComputer}
           selectable
           selectedIds={selectedIds}

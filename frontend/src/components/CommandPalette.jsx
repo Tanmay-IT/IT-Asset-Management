@@ -7,6 +7,7 @@ import {
   Server,
   Printer,
   HardDrive,
+  ShieldCheck,
   Plus,
   ArrowRight,
   CornerDownLeft,
@@ -16,6 +17,7 @@ import { useServerRoomItems } from '../hooks/useServerRoomItems';
 import { useTonerInward } from '../hooks/useTonerInward';
 import { useTonerOutward } from '../hooks/useTonerOutward';
 import { useHddSearch } from '../hooks/useHddSearch';
+import { useWarranty } from '../hooks/useWarranty';
 
 const NAV_ITEMS = [
   { label: 'Go to Dashboard', to: '/', icon: LayoutDashboard },
@@ -23,6 +25,7 @@ const NAV_ITEMS = [
   { label: 'Go to Server Room', to: '/server-room', icon: Server },
   { label: 'Go to Toners', to: '/toners', icon: Printer },
   { label: 'Go to HDD Archive', to: '/hdd', icon: HardDrive },
+  { label: 'Go to Warranty', to: '/warranty', icon: ShieldCheck },
 ];
 
 const QUICK_ACTIONS = [
@@ -30,6 +33,7 @@ const QUICK_ACTIONS = [
   { label: 'Add Server Room Item', to: '/server-room', icon: Plus, openAdd: true },
   { label: 'Log Inward Toner', to: '/toners', icon: Plus, openAdd: 'inward' },
   { label: 'Log Outward Toner', to: '/toners', icon: Plus, openAdd: 'outward' },
+  { label: 'Add Warranty Record', to: '/warranty', icon: Plus, openAdd: true },
 ];
 
 function matchesQuery(haystackParts, query) {
@@ -47,6 +51,7 @@ export function CommandPalette({ onClose }) {
   const { inward } = useTonerInward();
   const { outward } = useTonerOutward();
   const { results: hddResults, isLoading: hddLoading } = useHddSearch(query);
+  const { warranties } = useWarranty();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -119,6 +124,18 @@ export function CommandPalette({ onClose }) {
       };
     });
 
+    const warrantyMatches = warranties
+      .filter((w) => matchesQuery([w.brand, w.model, w.serialNo, w.invoiceNo], normalizedQuery))
+      .slice(0, 5)
+      .map((w) => ({
+        kind: 'warranty',
+        label: w.model || w.brand || 'Warranty record',
+        sublabel: w.serialNo || w.invoiceNo,
+        icon: ShieldCheck,
+        to: '/warranty',
+        query: w.serialNo || w.model,
+      }));
+
     const navMatches = NAV_ITEMS.filter((item) => matchesQuery([item.label], normalizedQuery)).map((item) => ({
       ...item,
       kind: 'nav',
@@ -126,12 +143,13 @@ export function CommandPalette({ onClose }) {
 
     return [
       { title: 'Navigate', items: navMatches },
+      { title: 'Warranty', items: warrantyMatches },
       { title: 'Computers', items: computerMatches },
       { title: 'Server Room', items: serverRoomMatches },
       { title: 'Toners', items: tonerMatches },
       { title: 'HDD Archive', items: hddMatches },
     ].filter((group) => group.items.length > 0);
-  }, [isSearching, normalizedQuery, computers, serverRoomItems, inward, outward, hddResults]);
+  }, [isSearching, normalizedQuery, computers, serverRoomItems, inward, outward, hddResults, warranties]);
 
   const flatItems = useMemo(() => groups.flatMap((group) => group.items), [groups]);
 
@@ -173,9 +191,9 @@ export function CommandPalette({ onClose }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="animate-palette-in flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5"
+        className="animate-palette-in flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 dark:bg-gray-900 dark:ring-white/10"
       >
-        <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3">
+        <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
           <Search size={18} className="shrink-0 text-gray-400" />
           <input
             ref={inputRef}
@@ -183,9 +201,9 @@ export function CommandPalette({ onClose }) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search computers, server room, toners, HDD archive, or jump somewhere..."
-            className="min-w-0 flex-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none"
+            className="min-w-0 flex-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none dark:text-gray-100 dark:placeholder:text-gray-500"
           />
-          <kbd className="hidden shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-400 sm:block">
+          <kbd className="hidden shrink-0 rounded border border-gray-200 px-1.5 py-0.5 text-xs text-gray-400 sm:block dark:border-gray-700">
             Esc
           </kbd>
         </div>
@@ -198,7 +216,7 @@ export function CommandPalette({ onClose }) {
           ) : (
             groups.map((group) => (
               <div key={group.title} className="mb-2 last:mb-0">
-                <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                <p className="px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                   {group.title}
                 </p>
                 {group.items.map((item) => {
@@ -213,10 +231,12 @@ export function CommandPalette({ onClose }) {
                       onMouseEnter={() => setSelectedIndex(index)}
                       type="button"
                       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                        isSelected ? 'bg-red-50 text-red-700' : 'text-gray-700 hover:bg-gray-50'
+                        isSelected
+                          ? 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-400'
+                          : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <Icon size={16} className={isSelected ? 'text-red-600' : 'text-gray-400'} />
+                      <Icon size={16} className={isSelected ? 'text-red-600 dark:text-red-400' : 'text-gray-400'} />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       {item.sublabel && <span className="shrink-0 truncate text-xs text-gray-400">{item.sublabel}</span>}
                       {isSelected && <CornerDownLeft size={13} className="shrink-0 text-red-400" />}
@@ -228,7 +248,7 @@ export function CommandPalette({ onClose }) {
           )}
         </div>
 
-        <div className="flex items-center gap-4 border-t border-gray-100 px-4 py-2 text-xs text-gray-400">
+        <div className="flex items-center gap-4 border-t border-gray-100 px-4 py-2 text-xs text-gray-400 dark:border-gray-800">
           <span className="flex items-center gap-1">
             <ArrowRight size={12} className="rotate-90" /> <ArrowRight size={12} className="-rotate-90" /> Navigate
           </span>

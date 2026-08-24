@@ -55,12 +55,12 @@ export function HddDriveEditor({ drives, onChange }) {
   return (
     <div className="flex flex-col gap-4">
       {drives.map((drive, driveIndex) => (
-        <div key={driveIndex} className="rounded-lg border border-gray-200 bg-white p-3">
+        <div key={driveIndex} className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <select
               value={drive.driveLetter}
               onChange={(e) => updateDrive(driveIndex, { driveLetter: e.target.value })}
-              className="rounded-md border border-gray-200 px-2 py-1.5 text-sm"
+              className="rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             >
               {DRIVE_LETTER_OPTIONS.map((letter) => (
                 <option key={letter} value={letter}>
@@ -73,12 +73,12 @@ export function HddDriveEditor({ drives, onChange }) {
               value={drive.driveType}
               onChange={(e) => updateDrive(driveIndex, { driveType: e.target.value })}
               placeholder="Drive type (e.g. System Drive, Data Drive, Backup Drive)"
-              className="min-w-[180px] flex-1 rounded-md border border-gray-200 px-2 py-1.5 text-sm"
+              className="min-w-[180px] flex-1 rounded-md border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
             <button
               onClick={() => removeDrive(driveIndex)}
               type="button"
-              className="shrink-0 rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50"
+              className="shrink-0 rounded-md border border-gray-200 p-1.5 text-red-500 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-red-950/40"
               aria-label={`Remove drive ${drive.driveLetter}`}
             >
               <Trash2 size={14} />
@@ -89,7 +89,7 @@ export function HddDriveEditor({ drives, onChange }) {
             {drive.entries.map((entry, entryIndex) => (
               <div
                 key={entryIndex}
-                className="flex flex-wrap items-center gap-1.5 rounded-md border border-gray-100 bg-gray-50 p-2"
+                className="flex flex-wrap items-center gap-1.5 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-800 dark:bg-gray-800/60"
               >
                 {ENTRY_FIELDS.map(({ key, label }) => (
                   <input
@@ -98,13 +98,13 @@ export function HddDriveEditor({ drives, onChange }) {
                     value={entry[key]}
                     onChange={(e) => updateEntry(driveIndex, entryIndex, { [key]: e.target.value })}
                     placeholder={label}
-                    className="min-w-[110px] flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs"
+                    className="min-w-[110px] flex-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
                   />
                 ))}
                 <button
                   onClick={() => removeEntry(driveIndex, entryIndex)}
                   type="button"
-                  className="shrink-0 rounded-md border border-gray-200 bg-white p-1.5 text-red-500 hover:bg-red-50"
+                  className="shrink-0 rounded-md border border-gray-200 bg-white p-1.5 text-red-500 hover:bg-red-50 dark:border-gray-700 dark:bg-gray-900 dark:hover:bg-red-950/40"
                   aria-label="Remove entry"
                 >
                   <Trash2 size={13} />
@@ -114,7 +114,7 @@ export function HddDriveEditor({ drives, onChange }) {
             <button
               onClick={() => addEntry(driveIndex)}
               type="button"
-              className="flex w-fit items-center gap-1 text-xs font-medium text-red-600 hover:underline"
+              className="flex w-fit items-center gap-1 text-xs font-medium text-red-600 hover:underline dark:text-red-400"
             >
               <Plus size={13} /> Add entry
             </button>
@@ -125,7 +125,7 @@ export function HddDriveEditor({ drives, onChange }) {
       <button
         onClick={addDrive}
         type="button"
-        className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:border-red-300 hover:text-red-600"
+        className="flex w-fit items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:border-red-300 hover:text-red-600 dark:border-gray-700 dark:text-gray-400 dark:hover:border-red-500 dark:hover:text-red-400"
       >
         <Plus size={14} /> Add Drive
       </button>

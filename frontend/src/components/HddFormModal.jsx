@@ -83,14 +83,14 @@ export function HddFormModal({ mode, main, detail, onClose, onSubmit }) {
         {showMainFields && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {mainFields.map(({ key, label }) => (
-              <label key={key} className="text-sm text-gray-600">
+              <label key={key} className="text-sm text-gray-600 dark:text-gray-400">
                 {label}
                 <input
                   type="text"
                   value={mainForm[key]}
                   onChange={handleMainChange(key)}
                   autoFocus={key === 'allotted'}
-                  className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                 />
               </label>
             ))}
@@ -98,41 +98,41 @@ export function HddFormModal({ mode, main, detail, onClose, onSubmit }) {
         )}
 
         {showMainFields && (
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
             Note
             <textarea
               value={mainForm.note}
               onChange={handleMainChange('note')}
               rows={2}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
           </label>
         )}
 
         {!detail && (
-          <label className="flex items-center gap-2 text-sm text-gray-600">
+          <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <input
               type="checkbox"
               checked={includeDetail}
               onChange={(e) => setIncludeDetail(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
             />
             Also record a detailed drive sheet for this HDD
           </label>
         )}
 
         {includeDetail && (
-          <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3">
+          <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Detail Sheet Identity</p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {detailFields.map(({ key, label }) => (
-                <label key={key} className="text-sm text-gray-600">
+                <label key={key} className="text-sm text-gray-600 dark:text-gray-400">
                   {label}
                   <input
                     type="text"
                     value={detailForm[key]}
                     onChange={handleDetailChange(key)}
-                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
                   />
                 </label>
               ))}

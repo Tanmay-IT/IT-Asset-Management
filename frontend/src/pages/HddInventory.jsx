@@ -75,7 +75,7 @@ export function HddInventory() {
       header: 'HDD Allotted',
       render: (row) => (
         <div className="flex items-center gap-1.5">
-          <span className="font-medium text-gray-900">{row.main?.allotted || row.detail?.userName || '—'}</span>
+          <span className="font-medium text-gray-900 dark:text-gray-100">{row.main?.allotted || row.detail?.userName || '—'}</span>
           {row.main?.note?.trim() && (
             <span title={row.main.note} className="text-gray-300">
               <StickyNote size={13} />
@@ -117,7 +117,7 @@ export function HddInventory() {
       render: (row) => (
         <button
           onClick={() => goToRecord(row)}
-          className="rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+          className="rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
         >
           View
         </button>
@@ -129,14 +129,14 @@ export function HddInventory() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">HDD Inventory</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">HDD Inventory</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Centralized inventory and archive of company HDDs, assignments and stored data.
           </p>
         </div>
         <button
           onClick={() => setIsAddOpen(true)}
-          className="flex w-fit items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+          className="no-print flex w-fit items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
         >
           <Plus size={16} /> Add HDD
         </button>
@@ -169,13 +169,13 @@ export function HddInventory() {
       />
 
       {!isSearchMode && (
-        <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-400">
+        <div className="no-print flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 dark:border-gray-800 dark:bg-gray-900">
+          <label className="flex flex-col gap-1 text-xs font-medium text-gray-400 dark:text-gray-500">
             Brand
             <select
               value={filters.brand}
               onChange={(e) => setFilters((prev) => ({ ...prev, brand: e.target.value }))}
-              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-gray-700 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-700 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
             >
               <option value="">All Brands</option>
               {brandOptions.map(([key, label]) => (
@@ -186,12 +186,12 @@ export function HddInventory() {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-xs font-medium text-gray-400">
+          <label className="flex flex-col gap-1 text-xs font-medium text-gray-400 dark:text-gray-500">
             Capacity
             <select
               value={filters.capacity}
               onChange={(e) => setFilters((prev) => ({ ...prev, capacity: e.target.value }))}
-              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm text-gray-700 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-sm text-gray-700 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
             >
               <option value="">All Capacities</option>
               {capacityOptions.map((capacity) => (
@@ -218,7 +218,7 @@ export function HddInventory() {
           {hasActiveFilters && (
             <button
               onClick={() => setFilters(emptyFilters)}
-              className="text-xs font-medium text-red-600 hover:underline"
+              className="text-xs font-medium text-red-600 hover:underline dark:text-red-400"
             >
               Clear filters
             </button>
@@ -230,10 +230,15 @@ export function HddInventory() {
         <SearchResults results={searchResults} isLoading={isSearching} query={query} onSelect={goToRecord} />
       ) : (
         <>
-          {isLoading && <p className="text-sm text-gray-500">Loading HDD inventory...</p>}
-          {error && <p className="text-sm text-red-600">Could not load HDD inventory: {error.message}</p>}
-          {!isLoading && !error && (
-            <DataTable columns={columns} rows={filtered} emptyMessage="No HDD records match this filter." />
+          {error && <p className="text-sm text-red-600 dark:text-red-400">Could not load HDD inventory: {error.message}</p>}
+          {!error && (
+            <DataTable
+              columns={columns}
+              rows={filtered}
+              emptyMessage="No HDD records match this filter."
+              emptyIcon={HardDrive}
+              isLoading={isLoading}
+            />
           )}
         </>
       )}
@@ -246,10 +251,10 @@ export function HddInventory() {
 }
 
 function SearchResults({ results, isLoading, query, onSelect }) {
-  if (isLoading) return <p className="text-sm text-gray-500">Searching...</p>;
+  if (isLoading) return <p className="text-sm text-gray-500 dark:text-gray-400">Searching...</p>;
   if (results.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500">
+      <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
         No HDD found matching "{query}".
       </p>
     );
@@ -268,12 +273,12 @@ function SearchResults({ results, isLoading, query, onSelect }) {
           <button
             key={`${result.main?._id || ''}-${result.detail?._id || ''}`}
             onClick={() => onSelect(result)}
-            className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-left hover:border-red-300"
+            className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-4 text-left hover:border-red-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-red-800"
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
-                <p className="font-medium text-gray-900">{title}</p>
-                {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+                <p className="font-medium text-gray-900 dark:text-gray-100">{title}</p>
+                {subtitle && <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>}
                 {result.serialNumber && (
                   <p className="break-all font-mono text-xs text-gray-400">{result.serialNumber}</p>
                 )}
@@ -281,11 +286,11 @@ function SearchResults({ results, isLoading, query, onSelect }) {
               <Tag color={status.color}>{status.label}</Tag>
             </div>
 
-            <div className="flex flex-col gap-1 border-t border-gray-100 pt-2 text-xs">
+            <div className="flex flex-col gap-1 border-t border-gray-100 pt-2 text-xs dark:border-gray-800">
               <p className="font-medium text-gray-400">Matched in:</p>
               {result.matches.slice(0, 4).map((match, index) => (
-                <p key={index} className="text-gray-600">
-                  {match.source} → <span className="text-gray-800">{match.value}</span>
+                <p key={index} className="text-gray-600 dark:text-gray-400">
+                  {match.source} → <span className="text-gray-800 dark:text-gray-200">{match.value}</span>
                 </p>
               ))}
               {result.matches.length > 4 && (

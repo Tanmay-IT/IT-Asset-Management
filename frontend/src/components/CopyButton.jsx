@@ -22,7 +22,7 @@ export function CopyButton({ value, label = 'Copy', copiedLabel = 'Copied', size
     <button
       onClick={handleCopy}
       type="button"
-      className={`inline-flex items-center gap-1 rounded-md border border-gray-200 ${padding} text-xs font-medium text-gray-500 hover:bg-gray-50`}
+      className={`inline-flex items-center gap-1 rounded-md border border-gray-200 ${padding} text-xs font-medium text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800`}
     >
       {copied ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
       {copied ? copiedLabel : label}

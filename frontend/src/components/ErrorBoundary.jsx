@@ -14,7 +14,7 @@ export class ErrorBoundary extends Component {
   render() {
     if (this.state.error) {
       return (
-        <div className="p-4 text-center text-red-600 sm:p-6">
+        <div className="p-4 text-center text-red-600 sm:p-6 dark:text-red-400">
           Something went wrong. Please refresh the page.
         </div>
       );

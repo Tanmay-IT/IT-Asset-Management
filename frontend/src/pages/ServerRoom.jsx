@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Download, FileUp, Pencil, Plus, Server, Trash2 } from 'lucide-react';
+import { StatusInlineSelect } from '../components/StatusInlineSelect';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
-import { Tag } from '../components/Tag';
 import { ServerRoomFormModal } from '../components/ServerRoomFormModal';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
@@ -136,7 +136,20 @@ export function ServerRoom() {
       key: 'status',
       header: 'Status',
       sortable: true,
-      render: (row) => (row.status ? <Tag color={getServerRoomStatusColor(row.status)}>{row.status}</Tag> : '—'),
+      render: (row) =>
+        row.status ? (
+          <StatusInlineSelect
+            value={row.status}
+            options={statusFilters.filter((s) => s !== 'All')}
+            colorFor={getServerRoomStatusColor}
+            onChange={async (next) => {
+              await editItem(row._id, { ...row, status: next });
+              toast.success(`Status set to "${next}".`);
+            }}
+          />
+        ) : (
+          '—'
+        ),
     },
     {
       key: 'problem',
@@ -177,19 +190,19 @@ export function ServerRoom() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Server Room</h1>
+        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">Server Room</h1>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchBar value={search} onChange={setSearch} placeholder="Search item, tag, serial..." />
-          <div className="flex flex-wrap gap-2">
+          <div className="no-print flex flex-wrap gap-2">
             <button
               onClick={handleExport}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <Download size={16} /> Export CSV
             </button>
             <button
               onClick={() => setIsImportOpen(true)}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <FileUp size={16} /> Import Excel
             </button>
@@ -204,14 +217,16 @@ export function ServerRoom() {
       </div>
 
       {statusFilters.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-gray-400">Status</span>
+        <div className="no-print flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">Status</span>
           {statusFilters.map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                statusFilter === status ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                statusFilter === status
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
               }`}
             >
               {status}
@@ -220,11 +235,13 @@ export function ServerRoom() {
         </div>
       )}
 
-      <BulkActionsBar
-        count={selectedIds.size}
-        onClear={() => setSelectedIds(new Set())}
-        actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOpen(true) }]}
-      />
+      <div className="no-print sticky top-14 z-20 -mx-4 bg-gray-50 px-4 py-1 sm:-mx-6 sm:px-6 dark:bg-gray-950">
+        <BulkActionsBar
+          count={selectedIds.size}
+          onClear={() => setSelectedIds(new Set())}
+          actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOpen(true) }]}
+        />
+      </div>
 
       {error && <p className="text-sm text-red-600">Could not load server room items: {error.message}</p>}
       {!error && (
@@ -233,6 +250,7 @@ export function ServerRoom() {
           rows={filtered}
           isLoading={isLoading}
           emptyMessage="No server room items yet. Add one manually or import an Excel sheet."
+          emptyIcon={Server}
           onRowClick={setDetailItem}
           selectable
           selectedIds={selectedIds}

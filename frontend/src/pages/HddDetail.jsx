@@ -52,15 +52,15 @@ function cloneDrives(drives) {
 function DiscrepancyRow({ label, mainValue, detailValue }) {
   return (
     <div>
-      <p className="text-sm text-amber-800">{label}</p>
+      <p className="text-sm text-amber-800 dark:text-amber-400">{label}</p>
       <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="rounded-md bg-white px-3 py-2">
+        <div className="rounded-md bg-white px-3 py-2 dark:bg-gray-900">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Main</p>
-          <p className="break-all font-mono text-sm text-gray-900">{mainValue}</p>
+          <p className="break-all font-mono text-sm text-gray-900 dark:text-gray-100">{mainValue}</p>
         </div>
-        <div className="rounded-md bg-white px-3 py-2">
+        <div className="rounded-md bg-white px-3 py-2 dark:bg-gray-900">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">Detail</p>
-          <p className="break-all font-mono text-sm text-gray-900">{detailValue}</p>
+          <p className="break-all font-mono text-sm text-gray-900 dark:text-gray-100">{detailValue}</p>
         </div>
       </div>
     </div>
@@ -159,16 +159,16 @@ export function HddDetail() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Link to="/hdd" className="flex w-fit items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700">
+      <Link to="/hdd" className="no-print flex w-fit items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
         <ArrowLeft size={16} /> Back to HDD Inventory
       </Link>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+      <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-800 dark:bg-gray-900">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">{title}</h1>
+          <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">{title}</h1>
           <Tag color={status.color}>{status.label}</Tag>
         </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
           {(main?.brand || detail?.brand) && <span>{main?.brand || detail?.brand}</span>}
           {(main?.capacity || detail?.capacity) && <span>· {main?.capacity || detail?.capacity}</span>}
           {serial ? (
@@ -180,7 +180,7 @@ export function HddDetail() {
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+        <div className="no-print flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
           <button
             onClick={() => setIsEditingInfo(true)}
             type="button"
@@ -193,14 +193,14 @@ export function HddDetail() {
           <button
             onClick={() => navigate('/hdd', { state: { initialQuery: serial || title } })}
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             <Search size={13} /> Search this HDD
           </button>
           <button
             onClick={() => setShowOriginal((prev) => !prev)}
             type="button"
-            className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
           >
             <FileSearch size={13} /> {showOriginal ? 'Hide' : 'View'} Source Record
           </button>
@@ -209,14 +209,14 @@ export function HddDetail() {
               <button
                 onClick={expandAllDrives}
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 <Maximize2 size={13} /> Expand All
               </button>
               <button
                 onClick={collapseAllDrives}
                 type="button"
-                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 <Minimize2 size={13} /> Collapse All
               </button>
@@ -226,17 +226,17 @@ export function HddDetail() {
       </div>
 
       {note?.trim() && (
-        <div className="flex flex-col gap-1 rounded-xl border border-gray-200 bg-white p-4">
+        <div className="flex flex-col gap-1 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
             <StickyNote size={14} /> Current Note
           </p>
-          <p className="text-sm text-gray-900">{note}</p>
+          <p className="text-sm text-gray-900 dark:text-gray-100">{note}</p>
         </div>
       )}
 
       {detail?.matchConfidence === 'discrepancy' && main && (
-        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <p className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/30">
+          <p className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-400">
             <AlertTriangle size={16} /> Verification Required
           </p>
           {serialDiffers && (
@@ -257,16 +257,16 @@ export function HddDetail() {
       )}
 
       {!main && detail && detail.serialNumber && (
-        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400">
           <AlertTriangle size={16} />
           No matching Main inventory record was found for this detail sheet's serial number.
         </div>
       )}
 
       {allFlags.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">All verification notes</p>
-          <ul className="list-inside list-disc text-sm text-gray-600">
+          <ul className="list-inside list-disc text-sm text-gray-600 dark:text-gray-300">
             {allFlags.map((flag, index) => (
               <li key={index}>{flag}</li>
             ))}
@@ -274,21 +274,21 @@ export function HddDetail() {
         </div>
       )}
 
-      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
-        <h2 className="mb-3 text-sm font-semibold text-gray-900">HDD Information</h2>
+      <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-800 dark:bg-gray-900">
+        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">HDD Information</h2>
         <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {INFO_FIELDS.map(({ key, detailKey, label }) => {
             const value = main?.[key] || (detailKey ? detail?.[detailKey] : '');
             return (
               <div key={label}>
                 <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</dt>
-                <dd className="text-sm text-gray-900">{value || '—'}</dd>
+                <dd className="text-sm text-gray-900 dark:text-gray-100">{value || '—'}</dd>
               </div>
             );
           })}
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">Serial Number</dt>
-            <dd className="break-all font-mono text-sm text-gray-900">
+            <dd className="break-all font-mono text-sm text-gray-900 dark:text-gray-100">
               {serial || <span className="font-sans text-gray-400">Not available in source data</span>}
             </dd>
           </div>
@@ -296,18 +296,18 @@ export function HddDetail() {
       </div>
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-gray-900">Data Overview</h2>
+        <h2 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Data Overview</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {DRIVE_LETTERS.map((letter) => {
             const drive = detail?.drives?.find((d) => d.driveLetter === letter);
             const count = drive?.entries?.length || 0;
             return (
-              <div key={letter} className="rounded-lg border border-gray-200 bg-white p-3">
-                <p className="text-sm font-medium text-gray-900">{letter}:\</p>
+              <div key={letter} className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{letter}:\</p>
                 <p className="text-xs text-gray-400">
                   {drive?.driveType || (letter === 'C' ? 'System Drive' : 'Data Drive')}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {!detail || detail.hasData === false
                     ? 'No detailed data recorded'
                     : count > 0
@@ -322,7 +322,7 @@ export function HddDetail() {
 
       {detail && detail.hasData !== false && (
         <div>
-          <h2 className="mb-2 text-sm font-semibold text-gray-900">Data Found</h2>
+          <h2 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Data Found</h2>
           {dataCategories.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {dataCategories.map((category) => (
@@ -339,12 +339,12 @@ export function HddDetail() {
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-900">Storage Contents</h2>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Storage Contents</h2>
           {detail && detail.hasData !== false && !isEditingDrives && (
             <button
               onClick={startEditingDrives}
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+              className="no-print inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <Settings2 size={13} /> Edit Contents
             </button>
@@ -352,13 +352,13 @@ export function HddDetail() {
         </div>
 
         {!detail && (
-          <p className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+          <p className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
             No detailed drive information is recorded for this HDD. Use "Edit HDD" above to record a detail sheet
             for it.
           </p>
         )}
         {detail && detail.hasData === false && (
-          <p className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+          <p className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
             No populated data recorded in this source sheet.
           </p>
         )}
@@ -383,7 +383,7 @@ export function HddDetail() {
               <button
                 onClick={cancelEditingDrives}
                 type="button"
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 Cancel
               </button>
@@ -406,8 +406,8 @@ export function HddDetail() {
       </div>
 
       {showOriginal && (
-        <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
-          <h2 className="mb-1 text-sm font-semibold text-gray-900">Source Record</h2>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-1 text-sm font-semibold text-gray-900 dark:text-gray-100">Source Record</h2>
           <div className="mb-3 flex flex-col gap-0.5 text-xs text-gray-400">
             {main && (
               <p>
@@ -479,7 +479,7 @@ function OriginalField({ label, value, mono }) {
   return (
     <div>
       <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</dt>
-      <dd className={`whitespace-pre-wrap break-words text-sm text-gray-900 ${mono ? 'break-all font-mono' : ''}`}>
+      <dd className={`whitespace-pre-wrap break-words text-sm text-gray-900 dark:text-gray-100 ${mono ? 'break-all font-mono' : ''}`}>
         {value ? `"${value}"` : <span className="text-gray-400">Not available</span>}
       </dd>
     </div>

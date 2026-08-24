@@ -45,15 +45,15 @@ export function ToastProvider({ children }) {
           return (
             <div
               key={t.id}
-              className={`animate-toast-in pointer-events-auto relative flex w-[calc(100vw-2rem)] max-w-sm items-start gap-2.5 overflow-hidden rounded-xl bg-white p-3.5 pr-9 shadow-lg ring-1 ${variant.ring}`}
+              className={`animate-toast-in pointer-events-auto relative flex w-[calc(100vw-2rem)] max-w-sm items-start gap-2.5 overflow-hidden rounded-xl bg-white p-3.5 pr-9 shadow-lg ring-1 dark:bg-gray-800 dark:ring-white/10 ${variant.ring}`}
             >
               <span className={`absolute inset-y-0 left-0 w-1 ${variant.bar}`} />
               <Icon size={18} className={`mt-0.5 shrink-0 ${variant.iconColor}`} />
-              <p className="text-sm text-gray-800">{t.message}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-100">{t.message}</p>
               <button
                 onClick={() => dismiss(t.id)}
                 aria-label="Dismiss"
-                className="absolute right-2 top-2 rounded-full p-1 text-gray-300 hover:bg-gray-100 hover:text-gray-500"
+                className="absolute right-2 top-2 rounded-full p-1 text-gray-300 hover:bg-gray-100 hover:text-gray-500 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
               >
                 <X size={14} />
               </button>

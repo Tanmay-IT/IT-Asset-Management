@@ -25,10 +25,10 @@ export function useResourceImport(importUrl) {
     }
   }
 
-  async function confirmImport(rows) {
+  async function confirmImport(rows, extra = {}) {
     setIsImporting(true);
     try {
-      const { data } = await api.post(`${importUrl}/confirm`, { rows });
+      const { data } = await api.post(`${importUrl}/confirm`, { rows, ...extra });
       return data;
     } finally {
       setIsImporting(false);

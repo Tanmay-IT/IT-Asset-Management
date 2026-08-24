@@ -29,7 +29,7 @@ export function TonerOutwardFormModal({ onClose, onSubmit, initialValues }) {
     <Modal isOpen onClose={onClose} title={initialValues ? 'Edit Outward Entry' : 'Log Outward Toner'} size="lg">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
             Date of Order
             <input
               type="text"
@@ -37,47 +37,47 @@ export function TonerOutwardFormModal({ onClose, onSubmit, initialValues }) {
               onChange={handleChange('dateOfOrder')}
               placeholder="dd-mm-yyyy"
               autoFocus
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
             Toner Type
             <input
               type="text"
               value={form.tonerType}
               onChange={handleChange('tonerType')}
               placeholder="e.g. 12A"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
           </label>
-          <label className="text-sm text-gray-600 sm:col-span-2">
+          <label className="text-sm text-gray-600 dark:text-gray-400 sm:col-span-2">
             Delivered To / Location
             <input
               type="text"
               value={form.deliveredTo}
               onChange={handleChange('deliveredTo')}
               placeholder="e.g. Snehal Joshi (JNPT)"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
             Qty Delivered / Used
             <input
               type="text"
               value={form.qtyDelivered}
               onChange={handleChange('qtyDelivered')}
               placeholder="e.g. 2, or 1 used in HO printer"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
           </label>
-          <label className="text-sm text-gray-600">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
             Date Delivered / Used
             <input
               type="text"
               value={form.dateDelivered}
               onChange={handleChange('dateDelivered')}
               placeholder="dd-mm-yyyy"
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400"
+              className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-400 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
           </label>
         </div>

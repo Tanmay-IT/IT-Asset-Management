@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 
 function defaultGetRowId(row, index) {
   return row._id ?? row.id ?? index;
@@ -8,7 +9,7 @@ function defaultGetRowId(row, index) {
 function SkeletonCell({ seed }) {
   const width = 55 + (seed % 35);
   return (
-    <div className="h-4 animate-pulse rounded bg-gray-100" style={{ width: `${width}%` }} />
+    <div className="h-4 animate-pulse rounded bg-gray-100 dark:bg-gray-800" style={{ width: `${width}%` }} />
   );
 }
 
@@ -16,6 +17,8 @@ export function DataTable({
   columns,
   rows,
   emptyMessage = 'No results found.',
+  emptyIcon,
+  emptyAction,
   onRowClick,
   isLoading = false,
   skeletonRows = 5,
@@ -66,9 +69,9 @@ export function DataTable({
   return (
     <div>
       {/* Desktop / tablet table */}
-      <div className="hidden overflow-x-auto rounded-lg border border-gray-200 bg-white sm:block">
+      <div className="hidden overflow-x-auto rounded-lg border border-gray-200 bg-white sm:block dark:border-gray-800 dark:bg-gray-900">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="sticky top-14 z-10 bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+          <thead className="sticky top-14 z-10 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-800 dark:text-gray-400">
             <tr>
               {selectable && (
                 <th className="w-10 px-4 py-3">
@@ -79,7 +82,7 @@ export function DataTable({
                       if (el) el.indeterminate = someSelected && !allSelected;
                     }}
                     onChange={() => onToggleAll(visibleIds)}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
                     aria-label="Select all rows"
                   />
                 </th>
@@ -89,7 +92,7 @@ export function DataTable({
                   key={col.key}
                   onClick={col.sortable ? () => handleSort(col) : undefined}
                   className={`whitespace-nowrap px-4 py-3 font-medium ${
-                    col.sortable ? 'cursor-pointer select-none hover:text-gray-700' : ''
+                    col.sortable ? 'cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-200' : ''
                   }`}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -109,7 +112,7 @@ export function DataTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {isLoading ? (
               Array.from({ length: skeletonRows }).map((_, rowIndex) => (
                 <tr key={`skeleton-${rowIndex}`}>
@@ -123,8 +126,8 @@ export function DataTable({
               ))
             ) : sortedRows.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (selectable ? 1 : 0)} className="px-4 py-6 text-center text-gray-400">
-                  {emptyMessage}
+                <td colSpan={columns.length + (selectable ? 1 : 0)} className="px-4 py-6">
+                  <EmptyState icon={emptyIcon} message={emptyMessage} action={emptyAction} />
                 </td>
               </tr>
             ) : (
@@ -134,7 +137,7 @@ export function DataTable({
                   <tr
                     key={rowId}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''} ${
+                    className={`hover:bg-gray-50 dark:hover:bg-gray-800/60 ${onRowClick ? 'cursor-pointer' : ''} ${
                       highlightedId === rowId ? 'animate-row-flash' : ''
                     }`}
                   >
@@ -144,13 +147,13 @@ export function DataTable({
                           type="checkbox"
                           checked={Boolean(selectedIds?.has(rowId))}
                           onChange={() => onToggleRow(rowId)}
-                          className="h-4 w-4 rounded border-gray-300"
+                          className="h-4 w-4 rounded border-gray-300 dark:border-gray-600"
                           aria-label="Select row"
                         />
                       </td>
                     )}
                     {columns.map((col) => (
-                      <td key={col.key} className="whitespace-nowrap px-4 py-3 text-gray-700">
+                      <td key={col.key} className="whitespace-nowrap px-4 py-3 text-gray-700 dark:text-gray-300">
                         {col.render ? col.render(row) : row[col.key]}
                       </td>
                     ))}
@@ -166,15 +169,13 @@ export function DataTable({
       <div className="flex flex-col gap-3 sm:hidden">
         {isLoading
           ? Array.from({ length: skeletonRows }).map((_, i) => (
-              <div key={`skeleton-card-${i}`} className="rounded-lg border border-gray-200 bg-white p-3">
-                <div className="mb-2 h-4 w-1/2 animate-pulse rounded bg-gray-100" />
-                <div className="h-3 w-1/3 animate-pulse rounded bg-gray-100" />
+              <div key={`skeleton-card-${i}`} className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+                <div className="mb-2 h-4 w-1/2 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                <div className="h-3 w-1/3 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
               </div>
             ))
           : sortedRows.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
-                {emptyMessage}
-              </p>
+              <EmptyState icon={emptyIcon} message={emptyMessage} action={emptyAction} />
             ) : (
               sortedRows.map((row, index) => {
                 const rowId = getRowId(row, index);
@@ -182,8 +183,8 @@ export function DataTable({
                   <div
                     key={rowId}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={`rounded-lg border bg-white p-3 ${onRowClick ? 'cursor-pointer' : ''} ${
-                      highlightedId === rowId ? 'animate-row-flash border-gray-200' : 'border-gray-200'
+                    className={`rounded-lg border bg-white p-3 dark:bg-gray-900 ${onRowClick ? 'cursor-pointer' : ''} ${
+                      highlightedId === rowId ? 'animate-row-flash border-gray-200 dark:border-gray-800' : 'border-gray-200 dark:border-gray-800'
                     }`}
                   >
                     {selectable && (
@@ -192,21 +193,21 @@ export function DataTable({
                         checked={Boolean(selectedIds?.has(rowId))}
                         onChange={() => onToggleRow(rowId)}
                         onClick={(e) => e.stopPropagation()}
-                        className="mb-2 h-4 w-4 rounded border-gray-300"
+                        className="mb-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600"
                         aria-label="Select row"
                       />
                     )}
                     <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
                       {cardColumns.map((col) => (
                         <div key={col.key} className={col.mobileFullWidth ? 'col-span-2' : ''}>
-                          <dt className="text-xs text-gray-400">{col.header || col.key}</dt>
-                          <dd className="truncate text-gray-700">{col.render ? col.render(row) : row[col.key]}</dd>
+                          <dt className="text-xs text-gray-400 dark:text-gray-500">{col.header || col.key}</dt>
+                          <dd className="truncate text-gray-700 dark:text-gray-300">{col.render ? col.render(row) : row[col.key]}</dd>
                         </div>
                       ))}
                     </dl>
                     {actionsColumn && (
                       <div
-                        className="mt-2 flex justify-end border-t border-gray-100 pt-2"
+                        className="mt-2 flex justify-end border-t border-gray-100 pt-2 dark:border-gray-800"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {actionsColumn.render(row)}

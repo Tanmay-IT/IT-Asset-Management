@@ -38,6 +38,13 @@ export function lowercase(raw) {
   return raw.toLowerCase();
 }
 
+export function parseNumber(raw, issues, label) {
+  const value = Number(raw.trim());
+  if (Number.isFinite(value)) return value;
+  issues.push(`Unrecognized number "${raw}" for ${label}`);
+  return undefined;
+}
+
 /**
  * fieldDefinitions: [{ key, label, aliases: string[], transform?: (raw, issues) => value|undefined }]
  * transform defaults to returning the raw trimmed string unchanged.
@@ -102,4 +109,63 @@ export async function parseWorkbook(buffer, fieldDefinitions) {
   }
 
   return { rows, unmappedHeaders: [...new Set(unmappedHeaders)] };
+}
+
+function slugifyHeader(header) {
+  return header.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'field';
+}
+
+/**
+ * Like `parseWorkbook`, but for resources with no predefined schema (custom
+ * user-defined modules): every header in row 1 becomes a column, keyed by a
+ * slugified version of itself, with no transform/validation — every value is
+ * kept as the trimmed source string. Column identity is entirely up to the
+ * caller (`mergeColumns` on the module) once this returns.
+ */
+export async function parseWorkbookDynamic(buffer) {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
+    throw new Error('The uploaded file has no worksheets.');
+  }
+
+  const columnByColNumber = new Map();
+  const usedKeys = new Set();
+
+  worksheet.getRow(1).eachCell({ includeEmpty: false }, (cell, colNumber) => {
+    const raw = cellValueToString(cell.value);
+    if (!raw) return;
+    const base = slugifyHeader(raw);
+    let key = base;
+    let suffix = 2;
+    while (usedKeys.has(key)) {
+      key = `${base}_${suffix}`;
+      suffix += 1;
+    }
+    usedKeys.add(key);
+    columnByColNumber.set(colNumber, { key, label: raw });
+  });
+
+  const columns = [...columnByColNumber.values()];
+  const rows = [];
+
+  for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+    const row = worksheet.getRow(rowNumber);
+    if (row.cellCount === 0) continue;
+
+    const data = {};
+    let hasAnyValue = false;
+    for (const [colNumber, col] of columnByColNumber) {
+      const raw = cellValueToString(row.getCell(colNumber).value);
+      if (!raw) continue;
+      hasAnyValue = true;
+      data[col.key] = raw;
+    }
+    if (!hasAnyValue) continue;
+
+    rows.push({ rowNumber, data, issues: [], status: 'ok' });
+  }
+
+  return { rows, columns };
 }

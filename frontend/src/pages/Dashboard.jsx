@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Monitor, AlertTriangle, Wrench, Server, Printer, HardDrive, ArrowRight, Database } from 'lucide-react';
+import { Monitor, AlertTriangle, Wrench, Server, Printer, HardDrive, ShieldCheck, Layers, ArrowRight, Database } from 'lucide-react';
 import { MetricCard } from '../components/MetricCard';
 import { BarList } from '../components/charts/BarList';
 import { StatusBar } from '../components/charts/StatusBar';
@@ -11,15 +11,19 @@ import { useTonerInward } from '../hooks/useTonerInward';
 import { useTonerOutward } from '../hooks/useTonerOutward';
 import { useHddDashboard } from '../hooks/useHddDashboard';
 import { useHddInventory } from '../hooks/useHddInventory';
+import { useWarranty } from '../hooks/useWarranty';
+import { useCustomModules } from '../hooks/useCustomModules';
 import { computeTonerStock } from '../lib/tonerStock';
 import { getFilterBucket } from '../lib/hddStatus';
 import { classifyServerRoomStatus } from '../lib/serverRoomStatus';
+import { getWarrantyExpiry } from '../lib/warrantyExpiry';
 
 const QUICK_LINKS = [
   { to: '/computers', label: 'Computers', icon: Monitor, description: 'Laptops & desktops inventory' },
   { to: '/server-room', label: 'Server Room', icon: Server, description: 'Racked equipment & bins' },
   { to: '/toners', label: 'Toners', icon: Printer, description: 'Inward / outward stock log' },
   { to: '/hdd', label: 'HDD Archive', icon: HardDrive, description: 'Inventory & data archive' },
+  { to: '/warranty', label: 'Warranty', icon: ShieldCheck, description: 'Purchase & warranty expiry tracking' },
 ];
 
 function groupCount(items, getKey, fallbackLabel = 'Unassigned') {
@@ -55,8 +59,18 @@ export function Dashboard() {
   const { outward, isLoading: outwardLoading } = useTonerOutward();
   const { stats: hddStats } = useHddDashboard();
   const { entities: hddEntities } = useHddInventory();
+  const { warranties, isLoading: warrantyLoading } = useWarranty();
+  const { modules: customModules } = useCustomModules();
 
   const repairCount = serverRoomItems.filter((item) => item.problem?.trim()).length;
+  const expiringWarrantyCount = useMemo(
+    () =>
+      warranties.filter((w) => {
+        const expiry = getWarrantyExpiry(w.warrantyDate);
+        return expiry && (expiry.state === 'expiring' || expiry.state === 'expired');
+      }).length,
+    [warranties]
+  );
   const tonerStock = useMemo(() => computeTonerStock(inward, outward), [inward, outward]);
   const lowTonerCount = tonerStock.filter((entry) => entry.isLow).length;
   const tonerLoading = inwardLoading || outwardLoading;
@@ -101,11 +115,18 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Dashboard</h1>
-        <p className="text-sm text-gray-500">A live overview across every IT asset module.</p>
+        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">Dashboard</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">A live overview across every IT asset module.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <MetricCard
+          label="Warranty Expiring/Expired"
+          value={warrantyLoading ? '—' : expiringWarrantyCount}
+          icon={ShieldCheck}
+          tone={expiringWarrantyCount > 0 ? 'warning' : 'default'}
+          onClick={() => navigate('/warranty')}
+        />
         <MetricCard
           label="Total Computers"
           value={computersLoading ? '—' : computers.length}
@@ -134,7 +155,7 @@ export function Dashboard() {
           label="Total HDD Capacity"
           value={hddStats ? `${(hddStats.totalListedCapacityGb / 1024).toFixed(1)} TB` : '—'}
           icon={Database}
-          tone="default"
+          tone="gold"
         />
       </div>
 
@@ -189,20 +210,28 @@ export function Dashboard() {
       </div>
 
       <div>
-        <h2 className="mb-2 text-sm font-semibold text-gray-900">Modules</h2>
+        <h2 className="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">Modules</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {QUICK_LINKS.map(({ to, label, icon: Icon, description }) => (
+          {[
+            ...QUICK_LINKS,
+            ...customModules.map((m) => ({
+              to: `/modules/${m.slug}`,
+              label: m.name,
+              icon: Layers,
+              description: 'Custom module',
+            })),
+          ].map(({ to, label, icon: Icon, description }) => (
             <Link
               key={to}
               to={to}
-              className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+              className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:shadow-none dark:hover:border-gray-700"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600 ring-4 ring-red-100">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600 ring-4 ring-red-100 dark:bg-red-950/40 dark:text-red-400 dark:ring-red-900/40">
                 <Icon size={20} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-gray-900">{label}</p>
-                <p className="truncate text-xs text-gray-500">{description}</p>
+                <p className="font-medium text-gray-900 dark:text-gray-100">{label}</p>
+                <p className="truncate text-xs text-gray-500 dark:text-gray-400">{description}</p>
               </div>
               <ArrowRight size={16} className="shrink-0 text-gray-300 transition-transform group-hover:translate-x-0.5" />
             </Link>

@@ -15,6 +15,43 @@ import { useTonerOutward } from '../hooks/useTonerOutward';
 import { computeTonerStock } from '../lib/tonerStock';
 import { useToast } from '../hooks/useToast';
 import { exportToCsv } from '../lib/exportCsv';
+import { parseLooseDate } from '../lib/parseLooseDate';
+
+const TREND_WINDOW_DAYS = 30;
+
+// Net change within the trend window, computed only from entries whose date
+// actually parses — never a fabricated or estimated figure. Returns null
+// when no entry of this toner type has a parseable date, so the UI can omit
+// the badge instead of implying "no recent activity" when it just couldn't tell.
+function computeRecentTrend(tonerType, inwardRows, outwardRows) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - TREND_WINDOW_DAYS);
+
+  let hasParseableDate = false;
+  let net = 0;
+
+  for (const row of inwardRows) {
+    if ((row.tonerType || '').trim().toUpperCase() !== tonerType.toUpperCase()) continue;
+    const date = parseLooseDate(row.dateOfOrder);
+    if (!date) continue;
+    hasParseableDate = true;
+    if (date >= cutoff) net += row.inwardQty || 0;
+  }
+
+  for (const row of outwardRows) {
+    if ((row.tonerType || '').trim().toUpperCase() !== tonerType.toUpperCase()) continue;
+    const date = parseLooseDate(row.dateDelivered || row.dateOfOrder);
+    if (!date) continue;
+    hasParseableDate = true;
+    if (date >= cutoff) {
+      const match = String(row.qtyDelivered || '').match(/^\s*(\d+(\.\d+)?)/);
+      net -= match ? Number(match[1]) : 0;
+    }
+  }
+
+  if (!hasParseableDate) return null;
+  return net;
+}
 
 const inwardImportColumns = [
   { key: 'dateOfOrder', header: 'Date', render: (row) => row.data.dateOfOrder || '—' },
@@ -292,21 +329,32 @@ export function Toners() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Toner Stock</h1>
-        <p className="text-sm text-gray-500">Inward (received) and outward (delivered/used) printer toner tracking.</p>
+        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">Toner Stock</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Inward (received) and outward (delivered/used) printer toner tracking.</p>
       </div>
 
       {stock.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stock.map((entry) => (
-            <MetricCard
-              key={entry.tonerType}
-              label={entry.tonerType}
-              value={entry.currentStock}
-              icon={Printer}
-              tone={entry.isLow ? 'warning' : 'default'}
-            />
-          ))}
+          {stock.map((entry) => {
+            const net = computeRecentTrend(entry.tonerType, inward, outward);
+            const trend =
+              net === null
+                ? undefined
+                : {
+                    direction: net > 0 ? 'up' : net < 0 ? 'down' : 'flat',
+                    label: `${net > 0 ? '+' : ''}${net} (${TREND_WINDOW_DAYS}d)`,
+                  };
+            return (
+              <MetricCard
+                key={entry.tonerType}
+                label={entry.tonerType}
+                value={entry.currentStock}
+                icon={Printer}
+                tone={entry.isLow ? 'warning' : 'default'}
+                trend={trend}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -314,17 +362,17 @@ export function Toners() {
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-gray-900">Inward Log</h2>
-          <div className="flex flex-wrap gap-2">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Inward Log</h2>
+          <div className="no-print flex flex-wrap gap-2">
             <button
               onClick={handleExportInward}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <Download size={14} /> Export CSV
             </button>
             <button
               onClick={() => setImportMode('inward')}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <FileUp size={14} /> Import Excel
             </button>
@@ -336,18 +384,21 @@ export function Toners() {
             </button>
           </div>
         </div>
-        <BulkActionsBar
-          count={selectedInwardIds.size}
-          onClear={() => setSelectedInwardIds(new Set())}
-          actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteInwardOpen(true) }]}
-        />
-        {inwardError && <p className="text-sm text-red-600">Could not load inward log: {inwardError.message}</p>}
+        <div className="no-print sticky top-14 z-20 -mx-4 bg-gray-50 px-4 py-1 sm:-mx-6 sm:px-6 dark:bg-gray-950">
+          <BulkActionsBar
+            count={selectedInwardIds.size}
+            onClear={() => setSelectedInwardIds(new Set())}
+            actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteInwardOpen(true) }]}
+          />
+        </div>
+        {inwardError && <p className="text-sm text-red-600 dark:text-red-400">Could not load inward log: {inwardError.message}</p>}
         {!inwardError && (
           <DataTable
             columns={inwardColumns}
             rows={filteredInward}
             isLoading={inwardLoading}
             emptyMessage="No inward toner entries yet."
+            emptyIcon={Printer}
             onRowClick={setDetailInward}
             selectable
             selectedIds={selectedInwardIds}
@@ -360,17 +411,17 @@ export function Toners() {
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-gray-900">Outward Log</h2>
-          <div className="flex flex-wrap gap-2">
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Outward Log</h2>
+          <div className="no-print flex flex-wrap gap-2">
             <button
               onClick={handleExportOutward}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <Download size={14} /> Export CSV
             </button>
             <button
               onClick={() => setImportMode('outward')}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <FileUp size={14} /> Import Excel
             </button>
@@ -382,18 +433,21 @@ export function Toners() {
             </button>
           </div>
         </div>
-        <BulkActionsBar
-          count={selectedOutwardIds.size}
-          onClear={() => setSelectedOutwardIds(new Set())}
-          actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOutwardOpen(true) }]}
-        />
-        {outwardError && <p className="text-sm text-red-600">Could not load outward log: {outwardError.message}</p>}
+        <div className="no-print sticky top-14 z-20 -mx-4 bg-gray-50 px-4 py-1 sm:-mx-6 sm:px-6 dark:bg-gray-950">
+          <BulkActionsBar
+            count={selectedOutwardIds.size}
+            onClear={() => setSelectedOutwardIds(new Set())}
+            actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOutwardOpen(true) }]}
+          />
+        </div>
+        {outwardError && <p className="text-sm text-red-600 dark:text-red-400">Could not load outward log: {outwardError.message}</p>}
         {!outwardError && (
           <DataTable
             columns={outwardColumns}
             rows={filteredOutward}
             isLoading={outwardLoading}
             emptyMessage="No outward toner entries yet."
+            emptyIcon={Printer}
             onRowClick={setDetailOutward}
             selectable
             selectedIds={selectedOutwardIds}
