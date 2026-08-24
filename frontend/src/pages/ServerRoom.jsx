@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FileUp, Pencil, Plus, Server, Trash2 } from 'lucide-react';
+import { Download, FileUp, Pencil, Plus, Server, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
 import { Tag } from '../components/Tag';
@@ -8,15 +8,26 @@ import { ServerRoomFormModal } from '../components/ServerRoomFormModal';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { BulkActionsBar } from '../components/BulkActionsBar';
 import { useServerRoomItems } from '../hooks/useServerRoomItems';
 import { getServerRoomStatusColor } from '../lib/serverRoomStatus';
 import { useToast } from '../hooks/useToast';
+import { exportToCsv } from '../lib/exportCsv';
 
 const importPreviewColumns = [
   { key: 'tagNumber', header: 'Tag Number', render: (row) => row.data.tagNumber || '—' },
   { key: 'item', header: 'Item', render: (row) => row.data.item || '—' },
   { key: 'serialNumber', header: 'Serial Number', render: (row) => row.data.serialNumber || '—' },
   { key: 'rawStatus', header: 'Status', render: (row) => row.data.status || '—' },
+];
+
+const EXPORT_FIELDS = [
+  { key: 'tagNumber', label: 'Tag Number' },
+  { key: 'item', label: 'Item' },
+  { key: 'model', label: 'Model' },
+  { key: 'serialNumber', label: 'Serial Number' },
+  { key: 'status', label: 'Status' },
+  { key: 'problem', label: 'Problem' },
 ];
 
 export function ServerRoom() {
@@ -29,6 +40,14 @@ export function ServerRoom() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [highlightedId, setHighlightedId] = useState(null);
+
+  function flashHighlight(id) {
+    setHighlightedId(id);
+    setTimeout(() => setHighlightedId((current) => (current === id ? null : current)), 1800);
+  }
 
   const statusFilters = useMemo(
     () => ['All', ...new Set(items.map((item) => item.status).filter(Boolean))],
@@ -54,17 +73,57 @@ export function ServerRoom() {
     setDeleteTarget(null);
   }
 
+  async function confirmBulkDelete() {
+    const ids = [...selectedIds];
+    await Promise.all(ids.map((id) => deleteItem(id)));
+    toast.success(`${ids.length} item${ids.length === 1 ? '' : 's'} removed.`);
+    setSelectedIds(new Set());
+    setBulkDeleteOpen(false);
+  }
+
+  function toggleRow(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll(visibleIds) {
+    setSelectedIds((prev) => {
+      const allSelected = visibleIds.every((id) => prev.has(id));
+      return allSelected ? new Set() : new Set(visibleIds);
+    });
+  }
+
+  async function handleFormSubmit(data) {
+    if (formState.mode === 'edit') {
+      await editItem(formState.item._id, data);
+      flashHighlight(formState.item._id);
+    } else {
+      const created = await addItem(data);
+      if (created?._id) flashHighlight(created._id);
+    }
+  }
+
   function handleImported(insertedCount) {
     setIsImportOpen(false);
     refetch();
     toast.success(`Imported ${insertedCount} item${insertedCount === 1 ? '' : 's'}.`);
   }
 
+  function handleExport() {
+    exportToCsv('server-room-items', filtered, EXPORT_FIELDS);
+    toast.success(`Exported ${filtered.length} item${filtered.length === 1 ? '' : 's'}.`);
+  }
+
   const columns = [
-    { key: 'tagNumber', header: 'Tag Number', render: (row) => row.tagNumber || '—' },
+    { key: 'tagNumber', header: 'Tag Number', sortable: true, render: (row) => row.tagNumber || '—' },
     {
       key: 'item',
       header: 'Item',
+      sortable: true,
       render: (row) => (
         <div>
           <p className="font-medium text-gray-900">{row.item || '—'}</p>
@@ -72,15 +131,17 @@ export function ServerRoom() {
         </div>
       ),
     },
-    { key: 'serialNumber', header: 'Serial Number', render: (row) => row.serialNumber || '—' },
+    { key: 'serialNumber', header: 'Serial Number', sortable: true, render: (row) => row.serialNumber || '—' },
     {
       key: 'status',
       header: 'Status',
+      sortable: true,
       render: (row) => (row.status ? <Tag color={getServerRoomStatusColor(row.status)}>{row.status}</Tag> : '—'),
     },
     {
       key: 'problem',
       header: 'Problem',
+      mobileFullWidth: true,
       render: (row) => <span className="text-gray-600">{row.problem || '—'}</span>,
     },
     {
@@ -119,16 +180,22 @@ export function ServerRoom() {
         <h1 className="text-lg font-semibold text-gray-900 sm:text-xl">Server Room</h1>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <SearchBar value={search} onChange={setSearch} placeholder="Search item, tag, serial..." />
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleExport}
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            >
+              <Download size={16} /> Export CSV
+            </button>
             <button
               onClick={() => setIsImportOpen(true)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
             >
               <FileUp size={16} /> Import Excel
             </button>
             <button
               onClick={() => setFormState({ mode: 'add' })}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
             >
               <Plus size={16} /> Add Item
             </button>
@@ -153,14 +220,25 @@ export function ServerRoom() {
         </div>
       )}
 
-      {isLoading && <p className="text-sm text-gray-500">Loading server room items...</p>}
+      <BulkActionsBar
+        count={selectedIds.size}
+        onClear={() => setSelectedIds(new Set())}
+        actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOpen(true) }]}
+      />
+
       {error && <p className="text-sm text-red-600">Could not load server room items: {error.message}</p>}
-      {!isLoading && !error && (
+      {!error && (
         <DataTable
           columns={columns}
           rows={filtered}
+          isLoading={isLoading}
           emptyMessage="No server room items yet. Add one manually or import an Excel sheet."
           onRowClick={setDetailItem}
+          selectable
+          selectedIds={selectedIds}
+          onToggleRow={toggleRow}
+          onToggleAll={toggleAll}
+          highlightedId={highlightedId}
         />
       )}
 
@@ -168,7 +246,7 @@ export function ServerRoom() {
         <ServerRoomFormModal
           onClose={() => setFormState(null)}
           initialValues={formState.mode === 'edit' ? formState.item : null}
-          onSubmit={(data) => (formState.mode === 'edit' ? editItem(formState.item._id, data) : addItem(data))}
+          onSubmit={handleFormSubmit}
         />
       )}
 
@@ -214,6 +292,15 @@ export function ServerRoom() {
           message={`Remove ${deleteTarget.item || 'this item'}? This can't be undone.`}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          title="Remove selected items?"
+          message={`Remove ${selectedIds.size} selected item${selectedIds.size === 1 ? '' : 's'}? This can't be undone.`}
+          onConfirm={confirmBulkDelete}
+          onCancel={() => setBulkDeleteOpen(false)}
         />
       )}
     </div>

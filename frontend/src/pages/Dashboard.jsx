@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Monitor, AlertTriangle, Wrench, Server, Printer, HardDrive, ArrowRight, Database } from 'lucide-react';
 import { MetricCard } from '../components/MetricCard';
 import { BarList } from '../components/charts/BarList';
@@ -48,6 +48,7 @@ function groupCountCaseInsensitive(items, getKey, fallbackLabel = 'Unknown') {
 }
 
 export function Dashboard() {
+  const navigate = useNavigate();
   const { computers, isLoading: computersLoading } = useComputers();
   const { items: serverRoomItems, isLoading: serverRoomLoading } = useServerRoomItems();
   const { inward, isLoading: inwardLoading } = useTonerInward();
@@ -138,8 +139,18 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <BarList title="Computers by Department" subtitle="Top departments by device count" bars={departmentBars} />
-        <BarList title="Computers by Branch" subtitle="Top branches by device count" bars={branchBars} />
+        <BarList
+          title="Computers by Department"
+          subtitle="Top departments by device count — click a bar to view"
+          bars={departmentBars}
+          onBarClick={(bar) => navigate('/computers', { state: { initialQuery: bar.label } })}
+        />
+        <BarList
+          title="Computers by Branch"
+          subtitle="Top branches by device count — click a bar to view"
+          bars={branchBars}
+          onBarClick={(bar) => navigate('/computers', { state: { initialQuery: bar.label } })}
+        />
 
         <MeterRow
           title="Security Software Coverage"
@@ -152,9 +163,10 @@ export function Dashboard() {
         />
         <BarList
           title="Toner Stock Levels"
-          subtitle="Current stock by toner type — low stock highlighted"
+          subtitle="Current stock by toner type — low stock highlighted, click to view"
           bars={tonerStock.map((entry) => ({ label: entry.tonerType, value: entry.currentStock }))}
           colorFor={(bar) => (tonerStock.find((entry) => entry.tonerType === bar.label)?.isLow ? 'red' : 'gray')}
+          onBarClick={(bar) => navigate('/toners', { state: { initialQuery: bar.label } })}
         />
 
         <StatusBar
@@ -164,7 +176,7 @@ export function Dashboard() {
         />
         <BarList
           title="Server Room by Status"
-          subtitle="As recorded in the source data — non-active in orange"
+          subtitle="As recorded in the source data — non-active in orange, click to view"
           bars={serverRoomStatusBars}
           colorFor={(bar) => {
             const state = classifyServerRoomStatus(bar.label);
@@ -172,6 +184,7 @@ export function Dashboard() {
             if (state === 'inactive') return 'orange';
             return 'gray';
           }}
+          onBarClick={(bar) => navigate('/server-room', { state: { initialQuery: bar.label } })}
         />
       </div>
 

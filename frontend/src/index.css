@@ -57,3 +57,16 @@
 .animate-palette-in {
   animation: palette-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+@keyframes row-flash {
+  0% {
+    background-color: rgba(220, 38, 38, 0.08);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-row-flash {
+  animation: row-flash 1.8s ease-out;
+}

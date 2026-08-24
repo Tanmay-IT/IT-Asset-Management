@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FileUp, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
+import { Download, FileUp, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
 import { MetricCard } from '../components/MetricCard';
@@ -9,10 +9,12 @@ import { TonerOutwardFormModal } from '../components/TonerOutwardFormModal';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { BulkActionsBar } from '../components/BulkActionsBar';
 import { useTonerInward } from '../hooks/useTonerInward';
 import { useTonerOutward } from '../hooks/useTonerOutward';
 import { computeTonerStock } from '../lib/tonerStock';
 import { useToast } from '../hooks/useToast';
+import { exportToCsv } from '../lib/exportCsv';
 
 const inwardImportColumns = [
   { key: 'dateOfOrder', header: 'Date', render: (row) => row.data.dateOfOrder || '—' },
@@ -24,6 +26,22 @@ const outwardImportColumns = [
   { key: 'dateOfOrder', header: 'Date', render: (row) => row.data.dateOfOrder || '—' },
   { key: 'tonerType', header: 'Toner Type', render: (row) => row.data.tonerType || '—' },
   { key: 'deliveredTo', header: 'Delivered To', render: (row) => row.data.deliveredTo || '—' },
+];
+
+const INWARD_EXPORT_FIELDS = [
+  { key: 'dateOfOrder', label: 'Date of Order' },
+  { key: 'tonerType', label: 'Toner Type' },
+  { key: 'inwardQty', label: 'Inward Qty' },
+  { key: 'balance', label: 'Balance' },
+  { key: 'note', label: 'Note' },
+];
+
+const OUTWARD_EXPORT_FIELDS = [
+  { key: 'dateOfOrder', label: 'Date of Order' },
+  { key: 'tonerType', label: 'Toner Type' },
+  { key: 'deliveredTo', label: 'Delivered To' },
+  { key: 'qtyDelivered', label: 'Qty Delivered/Used' },
+  { key: 'dateDelivered', label: 'Date Delivered' },
 ];
 
 export function Toners() {
@@ -58,6 +76,21 @@ export function Toners() {
   const [detailOutward, setDetailOutward] = useState(null);
   const [deleteInwardTarget, setDeleteInwardTarget] = useState(null);
   const [deleteOutwardTarget, setDeleteOutwardTarget] = useState(null);
+  const [selectedInwardIds, setSelectedInwardIds] = useState(() => new Set());
+  const [selectedOutwardIds, setSelectedOutwardIds] = useState(() => new Set());
+  const [bulkDeleteInwardOpen, setBulkDeleteInwardOpen] = useState(false);
+  const [bulkDeleteOutwardOpen, setBulkDeleteOutwardOpen] = useState(false);
+  const [highlightedInwardId, setHighlightedInwardId] = useState(null);
+  const [highlightedOutwardId, setHighlightedOutwardId] = useState(null);
+
+  function flashInward(id) {
+    setHighlightedInwardId(id);
+    setTimeout(() => setHighlightedInwardId((current) => (current === id ? null : current)), 1800);
+  }
+  function flashOutward(id) {
+    setHighlightedOutwardId(id);
+    setTimeout(() => setHighlightedOutwardId((current) => (current === id ? null : current)), 1800);
+  }
 
   const stock = useMemo(() => computeTonerStock(inward, outward), [inward, outward]);
 
@@ -95,6 +128,69 @@ export function Toners() {
     setDeleteOutwardTarget(null);
   }
 
+  async function confirmBulkDeleteInward() {
+    const ids = [...selectedInwardIds];
+    await Promise.all(ids.map((id) => deleteInward(id)));
+    toast.success(`${ids.length} inward entr${ids.length === 1 ? 'y' : 'ies'} removed.`);
+    setSelectedInwardIds(new Set());
+    setBulkDeleteInwardOpen(false);
+  }
+  async function confirmBulkDeleteOutward() {
+    const ids = [...selectedOutwardIds];
+    await Promise.all(ids.map((id) => deleteOutward(id)));
+    toast.success(`${ids.length} outward entr${ids.length === 1 ? 'y' : 'ies'} removed.`);
+    setSelectedOutwardIds(new Set());
+    setBulkDeleteOutwardOpen(false);
+  }
+
+  function toggleInwardRow(id) {
+    setSelectedInwardIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function toggleInwardAll(visibleIds) {
+    setSelectedInwardIds((prev) => {
+      const allSelected = visibleIds.every((id) => prev.has(id));
+      return allSelected ? new Set() : new Set(visibleIds);
+    });
+  }
+  function toggleOutwardRow(id) {
+    setSelectedOutwardIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function toggleOutwardAll(visibleIds) {
+    setSelectedOutwardIds((prev) => {
+      const allSelected = visibleIds.every((id) => prev.has(id));
+      return allSelected ? new Set() : new Set(visibleIds);
+    });
+  }
+
+  async function handleInwardSubmit(data) {
+    if (inwardForm.mode === 'edit') {
+      await editInward(inwardForm.row._id, data);
+      flashInward(inwardForm.row._id);
+    } else {
+      const created = await addInward(data);
+      if (created?._id) flashInward(created._id);
+    }
+  }
+  async function handleOutwardSubmit(data) {
+    if (outwardForm.mode === 'edit') {
+      await editOutward(outwardForm.row._id, data);
+      flashOutward(outwardForm.row._id);
+    } else {
+      const created = await addOutward(data);
+      if (created?._id) flashOutward(created._id);
+    }
+  }
+
   function handleImported(insertedCount, direction) {
     setImportMode(null);
     if (direction === 'inward') refetchInward();
@@ -102,16 +198,26 @@ export function Toners() {
     toast.success(`Imported ${insertedCount} ${direction} entr${insertedCount === 1 ? 'y' : 'ies'}.`);
   }
 
+  function handleExportInward() {
+    exportToCsv('toner-inward', filteredInward, INWARD_EXPORT_FIELDS);
+    toast.success(`Exported ${filteredInward.length} inward entr${filteredInward.length === 1 ? 'y' : 'ies'}.`);
+  }
+  function handleExportOutward() {
+    exportToCsv('toner-outward', filteredOutward, OUTWARD_EXPORT_FIELDS);
+    toast.success(`Exported ${filteredOutward.length} outward entr${filteredOutward.length === 1 ? 'y' : 'ies'}.`);
+  }
+
   const inwardColumns = [
-    { key: 'dateOfOrder', header: 'Date of Order', render: (row) => row.dateOfOrder || '—' },
+    { key: 'dateOfOrder', header: 'Date of Order', sortable: true, render: (row) => row.dateOfOrder || '—' },
     {
       key: 'tonerType',
       header: 'Toner Type',
+      sortable: true,
       render: (row) => <span className="font-medium text-gray-900">{row.tonerType || '—'}</span>,
     },
-    { key: 'inwardQty', header: 'Inward Qty', render: (row) => row.inwardQty ?? '—' },
+    { key: 'inwardQty', header: 'Inward Qty', sortable: true, render: (row) => row.inwardQty ?? '—' },
     { key: 'balance', header: 'Balance', render: (row) => (row.balance != null ? row.balance : '—') },
-    { key: 'note', header: 'Note', render: (row) => row.note || '—' },
+    { key: 'note', header: 'Note', mobileFullWidth: true, render: (row) => row.note || '—' },
     {
       key: 'actions',
       header: 'Actions',
@@ -143,15 +249,16 @@ export function Toners() {
   ];
 
   const outwardColumns = [
-    { key: 'dateOfOrder', header: 'Date of Order', render: (row) => row.dateOfOrder || '—' },
+    { key: 'dateOfOrder', header: 'Date of Order', sortable: true, render: (row) => row.dateOfOrder || '—' },
     {
       key: 'tonerType',
       header: 'Toner Type',
+      sortable: true,
       render: (row) => <span className="font-medium text-gray-900">{row.tonerType || '—'}</span>,
     },
-    { key: 'deliveredTo', header: 'Delivered To', render: (row) => row.deliveredTo || '—' },
+    { key: 'deliveredTo', header: 'Delivered To', sortable: true, mobileFullWidth: true, render: (row) => row.deliveredTo || '—' },
     { key: 'qtyDelivered', header: 'Qty', render: (row) => row.qtyDelivered || '—' },
-    { key: 'dateDelivered', header: 'Date Delivered', render: (row) => row.dateDelivered || '—' },
+    { key: 'dateDelivered', header: 'Date Delivered', sortable: true, render: (row) => row.dateDelivered || '—' },
     {
       key: 'actions',
       header: 'Actions',
@@ -208,7 +315,13 @@ export function Toners() {
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-gray-900">Inward Log</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleExportInward}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            >
+              <Download size={14} /> Export CSV
+            </button>
             <button
               onClick={() => setImportMode('inward')}
               className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
@@ -223,14 +336,24 @@ export function Toners() {
             </button>
           </div>
         </div>
-        {inwardLoading && <p className="text-sm text-gray-500">Loading inward log...</p>}
+        <BulkActionsBar
+          count={selectedInwardIds.size}
+          onClear={() => setSelectedInwardIds(new Set())}
+          actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteInwardOpen(true) }]}
+        />
         {inwardError && <p className="text-sm text-red-600">Could not load inward log: {inwardError.message}</p>}
-        {!inwardLoading && !inwardError && (
+        {!inwardError && (
           <DataTable
             columns={inwardColumns}
             rows={filteredInward}
+            isLoading={inwardLoading}
             emptyMessage="No inward toner entries yet."
             onRowClick={setDetailInward}
+            selectable
+            selectedIds={selectedInwardIds}
+            onToggleRow={toggleInwardRow}
+            onToggleAll={toggleInwardAll}
+            highlightedId={highlightedInwardId}
           />
         )}
       </div>
@@ -238,7 +361,13 @@ export function Toners() {
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-gray-900">Outward Log</h2>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleExportOutward}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            >
+              <Download size={14} /> Export CSV
+            </button>
             <button
               onClick={() => setImportMode('outward')}
               className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50"
@@ -253,14 +382,24 @@ export function Toners() {
             </button>
           </div>
         </div>
-        {outwardLoading && <p className="text-sm text-gray-500">Loading outward log...</p>}
+        <BulkActionsBar
+          count={selectedOutwardIds.size}
+          onClear={() => setSelectedOutwardIds(new Set())}
+          actions={[{ label: 'Delete', icon: Trash2, variant: 'danger', onClick: () => setBulkDeleteOutwardOpen(true) }]}
+        />
         {outwardError && <p className="text-sm text-red-600">Could not load outward log: {outwardError.message}</p>}
-        {!outwardLoading && !outwardError && (
+        {!outwardError && (
           <DataTable
             columns={outwardColumns}
             rows={filteredOutward}
+            isLoading={outwardLoading}
             emptyMessage="No outward toner entries yet."
             onRowClick={setDetailOutward}
+            selectable
+            selectedIds={selectedOutwardIds}
+            onToggleRow={toggleOutwardRow}
+            onToggleAll={toggleOutwardAll}
+            highlightedId={highlightedOutwardId}
           />
         )}
       </div>
@@ -269,7 +408,7 @@ export function Toners() {
         <TonerInwardFormModal
           onClose={() => setInwardForm(null)}
           initialValues={inwardForm.mode === 'edit' ? inwardForm.row : null}
-          onSubmit={(data) => (inwardForm.mode === 'edit' ? editInward(inwardForm.row._id, data) : addInward(data))}
+          onSubmit={handleInwardSubmit}
         />
       )}
 
@@ -277,7 +416,7 @@ export function Toners() {
         <TonerOutwardFormModal
           onClose={() => setOutwardForm(null)}
           initialValues={outwardForm.mode === 'edit' ? outwardForm.row : null}
-          onSubmit={(data) => (outwardForm.mode === 'edit' ? editOutward(outwardForm.row._id, data) : addOutward(data))}
+          onSubmit={handleOutwardSubmit}
         />
       )}
 
@@ -362,6 +501,22 @@ export function Toners() {
           message={`Remove this outward entry (${deleteOutwardTarget.tonerType || 'toner'})? This can't be undone.`}
           onConfirm={confirmDeleteOutward}
           onCancel={() => setDeleteOutwardTarget(null)}
+        />
+      )}
+      {bulkDeleteInwardOpen && (
+        <ConfirmDialog
+          title="Remove selected inward entries?"
+          message={`Remove ${selectedInwardIds.size} selected inward entr${selectedInwardIds.size === 1 ? 'y' : 'ies'}? This can't be undone.`}
+          onConfirm={confirmBulkDeleteInward}
+          onCancel={() => setBulkDeleteInwardOpen(false)}
+        />
+      )}
+      {bulkDeleteOutwardOpen && (
+        <ConfirmDialog
+          title="Remove selected outward entries?"
+          message={`Remove ${selectedOutwardIds.size} selected outward entr${selectedOutwardIds.size === 1 ? 'y' : 'ies'}? This can't be undone.`}
+          onConfirm={confirmBulkDeleteOutward}
+          onCancel={() => setBulkDeleteOutwardOpen(false)}
         />
       )}
     </div>

@@ -10,7 +10,7 @@ const BAR_FILL = {
  * per the dataviz rules unless `colorFor` is given a real reason to vary it
  * (emphasis: the point vs context, or a genuine status meaning — never rank).
  */
-export function BarList({ title, subtitle, bars, maxItems = 7, colorFor }) {
+export function BarList({ title, subtitle, bars, maxItems = 7, colorFor, onBarClick }) {
   const sorted = [...bars].sort((a, b) => b.value - a.value);
   const shown = sorted.slice(0, maxItems);
   const hiddenCount = sorted.length - shown.length;
@@ -30,8 +30,15 @@ export function BarList({ title, subtitle, bars, maxItems = 7, colorFor }) {
           {shown.map((bar) => {
             const widthPct = Math.max((bar.value / max) * 100, 3);
             const color = colorFor ? colorFor(bar) : 'red';
+            const Wrapper = onBarClick ? 'button' : 'div';
             return (
-              <div key={bar.label} className="group" title={`${bar.label}: ${bar.value}`}>
+              <Wrapper
+                key={bar.label}
+                type={onBarClick ? 'button' : undefined}
+                onClick={onBarClick ? () => onBarClick(bar) : undefined}
+                className={`group w-full text-left ${onBarClick ? 'cursor-pointer rounded-md -mx-1 px-1 py-0.5 transition-colors hover:bg-gray-50' : ''}`}
+                title={`${bar.label}: ${bar.value}`}
+              >
                 <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                   <span className="truncate text-gray-600">{bar.label}</span>
                   <span className="shrink-0 font-medium text-gray-900">{bar.value}</span>
@@ -42,7 +49,7 @@ export function BarList({ title, subtitle, bars, maxItems = 7, colorFor }) {
                     style={{ width: `${widthPct}%` }}
                   />
                 </div>
-              </div>
+              </Wrapper>
             );
           })}
         </div>

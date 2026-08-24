@@ -30,11 +30,13 @@ export function useResource(endpoint) {
   async function addItem(payload) {
     const { data } = await api.post(endpoint, payload);
     setItems((prev) => [data, ...prev]);
+    return data;
   }
 
   async function editItem(id, payload) {
     const { data } = await api.put(`${endpoint}/${id}`, payload);
     setItems((prev) => prev.map((item) => (item._id === id ? data : item)));
+    return data;
   }
 
   async function removeItem(id) {
