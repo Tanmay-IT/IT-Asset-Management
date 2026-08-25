@@ -1,6 +1,9 @@
-import { Menu, Search, Sun, Moon } from 'lucide-react';
+import { Menu, Search, Sun, Moon, LogOut } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 
 export function Header({ onMenuClick, onSearchClick, isDark, onToggleDark }) {
+  const { user, logout } = useAuth();
+
   return (
     <header className="no-print sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 transition-colors sm:px-6 dark:border-gray-800 dark:bg-gray-900">
       <button
@@ -34,6 +37,19 @@ export function Header({ onMenuClick, onSearchClick, isDark, onToggleDark }) {
           className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
         >
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+        {user && (
+          <span className="hidden max-w-[10rem] truncate text-xs text-gray-400 dark:text-gray-500 sm:inline">
+            {user.name || user.email}
+          </span>
+        )}
+        <button
+          onClick={logout}
+          aria-label="Log out"
+          title="Log out"
+          className="rounded-lg border border-gray-200 p-2 text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:border-gray-700 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-200"
+        >
+          <LogOut size={16} />
         </button>
       </div>
     </header>

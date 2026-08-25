@@ -19,12 +19,21 @@ need your own free accounts; I can't sign up on your behalf.
      `mongodb+srv://...` form; Render's network isn't firewalled the way
      this dev machine's is, so the standard string should work fine here).
    - `CLIENT_ORIGIN` — leave blank for now, you'll set this in step 3 below.
+   - `JWT_SECRET` — if using the Blueprint (`render.yaml`), this is
+     auto-generated for you (`generateValue: true`); no action needed.
+   - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — the login for the one admin account.
+     Choose real values — this becomes your actual sign-in for the live app.
 4. Deploy. Once live, copy the backend's URL
    (something like `https://itam-air-engine-backend.onrender.com`).
 
-The backend seeds the HDD Archive and Toner historical data into Atlas
-automatically the first time it boots against an empty database — no manual
-step needed for that part.
+The backend seeds the HDD Archive and Toner historical data into Atlas, and
+creates the admin account from `ADMIN_EMAIL`/`ADMIN_PASSWORD`, automatically
+the first time it boots against an empty database — no manual step needed
+for either. To change the admin login later, run
+`node scripts/resetAdmin.mjs` against that same `MONGODB_URI` (locally, with
+`.env` pointed at Atlas), update `ADMIN_EMAIL`/`ADMIN_PASSWORD` in Render's
+dashboard, then redeploy — the next boot re-creates the account with the new
+values.
 
 ## 2. Frontend — Vercel
 

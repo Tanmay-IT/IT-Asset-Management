@@ -5,6 +5,7 @@ import { HddMainRecord } from './models/hddMainRecord.model.js';
 import { TonerInward } from './models/tonerInward.model.js';
 import { seedHddData } from './seed/seedHddData.js';
 import { seedTonerData } from './seed/seedTonerData.js';
+import { bootstrapAdminUser } from './services/auth.service.js';
 
 const port = process.env.PORT || 5000;
 
@@ -27,6 +28,8 @@ async function bootstrapSeedData() {
 async function main() {
   await connectDB(process.env.MONGODB_URI);
   await bootstrapSeedData();
+  const admin = await bootstrapAdminUser();
+  if (admin) console.log(`Admin account bootstrap: created ${admin.email}.`);
 
   const app = createApp();
   app.listen(port, () => {
