@@ -2,18 +2,31 @@ import { Pencil } from 'lucide-react';
 import { Modal } from './Modal';
 import { Tag } from './Tag';
 
+const ACCENT_BADGE = {
+  red: 'from-red-500 to-red-700',
+  gold: 'from-gold-400 to-gold-600',
+  blue: 'from-sky-500 to-blue-600',
+  green: 'from-emerald-500 to-green-600',
+  purple: 'from-violet-500 to-purple-600',
+  slate: 'from-slate-500 to-slate-700',
+};
+
 /**
  * A read-only "everything about this record" card, opened by clicking a
  * table row. `sections` is [{ title?, fields: [{ label, value, mono? }] }] —
- * `value` may be any node (a Tag, a colored dot, plain text).
+ * `value` may be any node (a Tag, a colored dot, plain text). `accent`
+ * matches the owning page's `PageHeader` accent so the detail card visually
+ * belongs to that module.
  */
-export function DetailModal({ icon: Icon, name, subtitle, badge, sections, onClose, onEdit }) {
+export function DetailModal({ icon: Icon, name, subtitle, badge, sections, onClose, onEdit, accent = 'red' }) {
   return (
     <Modal isOpen onClose={onClose} title="Details" size="lg">
       <div className="flex flex-col gap-5">
-        <div className="flex items-start gap-4 rounded-xl bg-gradient-to-br from-red-50 to-white p-4 ring-1 ring-red-100 dark:from-red-950/40 dark:to-gray-900 dark:ring-red-900/40">
+        <div className="flex items-start gap-4 rounded-xl border border-gray-100 bg-gray-50/60 p-4 dark:border-gray-800 dark:bg-gray-800/40">
           {Icon && (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-600 text-white shadow-sm">
+            <div
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm ${ACCENT_BADGE[accent] || ACCENT_BADGE.red}`}
+            >
               <Icon size={22} />
             </div>
           )}

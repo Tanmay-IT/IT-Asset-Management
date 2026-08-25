@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Columns3, Download, ExternalLink, FileUp, Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
+import { PageHeader } from '../components/PageHeader';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -202,49 +203,51 @@ export function CustomModulePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">{module.name}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">A custom module you created — fully self-service.</p>
-        </div>
-        <div className="no-print flex flex-col gap-3 sm:flex-row sm:items-center">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search this module..." />
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setIsAddColumnOpen(true)}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <Columns3 size={16} /> Add Column
-            </button>
-            <button
-              onClick={handleExport}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <Download size={16} /> Export CSV
-            </button>
-            <button
-              onClick={() => setIsImportOpen(true)}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <FileUp size={16} /> Import Excel
-            </button>
-            <button
-              onClick={() => setFormState({ mode: 'add' })}
-              disabled={module.columns.length === 0}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              <Plus size={16} /> Add Record
-            </button>
-            <button
-              onClick={() => setDeleteModuleOpen(true)}
-              aria-label="Delete this module"
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-red-950/40"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Layers}
+        title={module.name}
+        subtitle="A custom module you created — fully self-service"
+        accent="red"
+        actions={
+          <>
+            <SearchBar value={search} onChange={setSearch} placeholder="Search this module..." />
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setIsAddColumnOpen(true)}
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <Columns3 size={16} /> Add Column
+              </button>
+              <button
+                onClick={handleExport}
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <Download size={16} /> Export CSV
+              </button>
+              <button
+                onClick={() => setIsImportOpen(true)}
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <FileUp size={16} /> Import Excel
+              </button>
+              <button
+                onClick={() => setFormState({ mode: 'add' })}
+                disabled={module.columns.length === 0}
+                className="flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                <Plus size={16} /> Add Record
+              </button>
+              <button
+                onClick={() => setDeleteModuleOpen(true)}
+                aria-label="Delete this module"
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:border-gray-700 dark:hover:bg-red-950/40"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </>
+        }
+      />
 
       <div className="no-print sticky top-14 z-20 -mx-4 bg-gray-50 px-4 py-1 sm:-mx-6 sm:px-6 dark:bg-gray-950">
         <BulkActionsBar

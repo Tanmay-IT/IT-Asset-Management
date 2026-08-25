@@ -5,6 +5,7 @@ import { MetricCard } from '../components/MetricCard';
 import { BarList } from '../components/charts/BarList';
 import { StatusBar } from '../components/charts/StatusBar';
 import { MeterRow } from '../components/charts/MeterRow';
+import { RadialStat } from '../components/charts/RadialStat';
 import { useComputers } from '../hooks/useComputers';
 import { useServerRoomItems } from '../hooks/useServerRoomItems';
 import { useTonerInward } from '../hooks/useTonerInward';
@@ -19,12 +20,28 @@ import { classifyServerRoomStatus } from '../lib/serverRoomStatus';
 import { getWarrantyExpiry } from '../lib/warrantyExpiry';
 
 const QUICK_LINKS = [
-  { to: '/computers', label: 'Computers', icon: Monitor, description: 'Laptops & desktops inventory' },
-  { to: '/server-room', label: 'Server Room', icon: Server, description: 'Racked equipment & bins' },
-  { to: '/toners', label: 'Toners', icon: Printer, description: 'Inward / outward stock log' },
-  { to: '/hdd', label: 'HDD Archive', icon: HardDrive, description: 'Inventory & data archive' },
-  { to: '/warranty', label: 'Warranty', icon: ShieldCheck, description: 'Purchase & warranty expiry tracking' },
+  { to: '/computers', label: 'Computers', icon: Monitor, description: 'Laptops & desktops inventory', accent: 'blue' },
+  { to: '/server-room', label: 'Server Room', icon: Server, description: 'Racked equipment & bins', accent: 'slate' },
+  { to: '/toners', label: 'Toners', icon: Printer, description: 'Inward / outward stock log', accent: 'purple' },
+  { to: '/hdd', label: 'HDD Archive', icon: HardDrive, description: 'Inventory & data archive', accent: 'gold' },
+  { to: '/warranty', label: 'Warranty', icon: ShieldCheck, description: 'Purchase & warranty expiry tracking', accent: 'green' },
 ];
+
+const ACCENT_BADGE = {
+  red: 'from-red-500 to-red-700',
+  gold: 'from-gold-400 to-gold-600',
+  blue: 'from-sky-500 to-blue-600',
+  green: 'from-emerald-500 to-green-600',
+  purple: 'from-violet-500 to-purple-600',
+  slate: 'from-slate-500 to-slate-700',
+};
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 function groupCount(items, getKey, fallbackLabel = 'Unassigned') {
   const counts = new Map();
@@ -71,6 +88,11 @@ export function Dashboard() {
       }).length,
     [warranties]
   );
+  const warrantyHealth = useMemo(() => {
+    const withExpiry = warranties.map((w) => getWarrantyExpiry(w.warrantyDate)).filter(Boolean);
+    const active = withExpiry.filter((e) => e.state === 'active').length;
+    return { active, total: withExpiry.length };
+  }, [warranties]);
   const tonerStock = useMemo(() => computeTonerStock(inward, outward), [inward, outward]);
   const lowTonerCount = tonerStock.filter((entry) => entry.isLow).length;
   const tonerLoading = inwardLoading || outwardLoading;
@@ -114,9 +136,17 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">Dashboard</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">A live overview across every IT asset module.</p>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-600 via-red-700 to-red-900 p-6 text-white shadow-lg sm:p-8">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -bottom-16 -left-10 h-48 w-48 rounded-full bg-white/5" />
+        <div className="relative flex flex-col gap-1">
+          <p className="text-sm font-medium text-red-100">{getGreeting()}, IGL IT Team</p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Command Center</h1>
+          <p className="max-w-xl text-sm text-red-100/90">
+            A live overview across every IT asset module — computers, server room, toners, HDD archive, warranty,
+            and anything else you add.
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -207,6 +237,14 @@ export function Dashboard() {
           }}
           onBarClick={(bar) => navigate('/server-room', { state: { initialQuery: bar.label } })}
         />
+
+        <RadialStat
+          title="Warranty Health"
+          subtitle="In-warranty vs. all tracked with a known date"
+          value={warrantyHealth.active}
+          total={warrantyHealth.total}
+          color="#16a34a"
+        />
       </div>
 
       <div>
@@ -219,14 +257,17 @@ export function Dashboard() {
               label: m.name,
               icon: Layers,
               description: 'Custom module',
+              accent: 'red',
             })),
-          ].map(({ to, label, icon: Icon, description }) => (
+          ].map(({ to, label, icon: Icon, description, accent }) => (
             <Link
               key={to}
               to={to}
-              className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:shadow-none dark:hover:border-gray-700"
+              className="group flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:shadow-none dark:hover:border-gray-700"
             >
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600 ring-4 ring-red-100 dark:bg-red-950/40 dark:text-red-400 dark:ring-red-900/40">
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm ${ACCENT_BADGE[accent] || ACCENT_BADGE.red}`}
+              >
                 <Icon size={20} />
               </div>
               <div className="min-w-0 flex-1">

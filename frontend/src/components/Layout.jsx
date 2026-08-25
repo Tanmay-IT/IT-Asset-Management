@@ -66,7 +66,9 @@ export function Layout() {
           onToggleDark={() => setIsDark((prev) => !prev)}
         />
         <main className="flex-1 p-4 sm:p-6">
-          <Outlet />
+          <div key={location.pathname} className="animate-page-in">
+            <Outlet />
+          </div>
         </main>
       </div>
 

@@ -103,7 +103,7 @@ export function ImportModal({ title, importUrl, previewColumns, onClose, onImpor
         )}
 
         {error && (
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-red-600 dark:text-red-400">
             Could not read the file: {error.response?.data?.message || error.message}
           </p>
         )}
@@ -120,7 +120,7 @@ export function ImportModal({ title, importUrl, previewColumns, onClose, onImpor
               </div>
 
               {confirmError && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-red-600 dark:text-red-400">
                   Import failed: {confirmError.response?.data?.message || confirmError.message}
                 </p>
               )}
@@ -143,12 +143,12 @@ export function ImportModal({ title, importUrl, previewColumns, onClose, onImpor
             </div>
 
             {preview.unmappedHeaders.length > 0 && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Columns not recognized and skipped: {preview.unmappedHeaders.join(', ')}
               </p>
             )}
 
-            <DataTable columns={columns} rows={preview.rows} />
+            <DataTable columns={columns} rows={preview.rows} stickyHeader={false} />
           </>
         )}
       </div>

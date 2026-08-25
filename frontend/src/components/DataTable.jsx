@@ -6,11 +6,18 @@ function defaultGetRowId(row, index) {
   return row._id ?? row.id ?? index;
 }
 
+const ACCENT_BORDER = {
+  red: 'border-l-red-500',
+  gold: 'border-l-gold-500',
+  blue: 'border-l-sky-500',
+  green: 'border-l-emerald-500',
+  purple: 'border-l-violet-500',
+  slate: 'border-l-slate-500',
+};
+
 function SkeletonCell({ seed }) {
   const width = 55 + (seed % 35);
-  return (
-    <div className="h-4 animate-pulse rounded bg-gray-100 dark:bg-gray-800" style={{ width: `${width}%` }} />
-  );
+  return <div className="skeleton-shimmer h-4 rounded" style={{ width: `${width}%` }} />;
 }
 
 export function DataTable({
@@ -28,6 +35,8 @@ export function DataTable({
   onToggleRow,
   onToggleAll,
   highlightedId,
+  accent = 'red',
+  stickyHeader = true,
 }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
@@ -65,13 +74,16 @@ export function DataTable({
 
   const actionsColumn = columns.find((c) => c.key === 'actions');
   const cardColumns = columns.filter((c) => c.key !== 'actions' && !c.hideOnMobile);
+  const [primaryCardColumn, ...secondaryCardColumns] = cardColumns;
 
   return (
     <div>
       {/* Desktop / tablet table */}
-      <div className="hidden overflow-x-auto rounded-lg border border-gray-200 bg-white sm:block dark:border-gray-800 dark:bg-gray-900">
+      <div className="hidden overflow-x-auto rounded-xl border border-gray-200 bg-white sm:block dark:border-gray-800 dark:bg-gray-900">
         <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="sticky top-14 z-10 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+          <thead
+            className={`bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-800 dark:text-gray-400 ${stickyHeader ? 'sticky top-14 z-10' : ''}`}
+          >
             <tr>
               {selectable && (
                 <th className="w-10 px-4 py-3">
@@ -169,9 +181,9 @@ export function DataTable({
       <div className="flex flex-col gap-3 sm:hidden">
         {isLoading
           ? Array.from({ length: skeletonRows }).map((_, i) => (
-              <div key={`skeleton-card-${i}`} className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
-                <div className="mb-2 h-4 w-1/2 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
-                <div className="h-3 w-1/3 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+              <div key={`skeleton-card-${i}`} className="rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900">
+                <div className="skeleton-shimmer mb-2 h-4 w-1/2 rounded" />
+                <div className="skeleton-shimmer h-3 w-1/3 rounded" />
               </div>
             ))
           : sortedRows.length === 0 ? (
@@ -183,22 +195,29 @@ export function DataTable({
                   <div
                     key={rowId}
                     onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    className={`rounded-lg border bg-white p-3 dark:bg-gray-900 ${onRowClick ? 'cursor-pointer' : ''} ${
+                    className={`rounded-xl border border-l-4 bg-white p-3 shadow-sm dark:bg-gray-900 dark:shadow-none ${ACCENT_BORDER[accent] || ACCENT_BORDER.red} ${onRowClick ? 'cursor-pointer' : ''} ${
                       highlightedId === rowId ? 'animate-row-flash border-gray-200 dark:border-gray-800' : 'border-gray-200 dark:border-gray-800'
                     }`}
                   >
-                    {selectable && (
-                      <input
-                        type="checkbox"
-                        checked={Boolean(selectedIds?.has(rowId))}
-                        onChange={() => onToggleRow(rowId)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mb-2 h-4 w-4 rounded border-gray-300 dark:border-gray-600"
-                        aria-label="Select row"
-                      />
-                    )}
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      {primaryCardColumn && (
+                        <div className="min-w-0 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {primaryCardColumn.render ? primaryCardColumn.render(row) : row[primaryCardColumn.key]}
+                        </div>
+                      )}
+                      {selectable && (
+                        <input
+                          type="checkbox"
+                          checked={Boolean(selectedIds?.has(rowId))}
+                          onChange={() => onToggleRow(rowId)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-4 w-4 shrink-0 rounded border-gray-300 dark:border-gray-600"
+                          aria-label="Select row"
+                        />
+                      )}
+                    </div>
                     <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
-                      {cardColumns.map((col) => (
+                      {secondaryCardColumns.map((col) => (
                         <div key={col.key} className={col.mobileFullWidth ? 'col-span-2' : ''}>
                           <dt className="text-xs text-gray-400 dark:text-gray-500">{col.header || col.key}</dt>
                           <dd className="truncate text-gray-700 dark:text-gray-300">{col.render ? col.render(row) : row[col.key]}</dd>

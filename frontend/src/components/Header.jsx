@@ -10,7 +10,12 @@ export function Header({ onMenuClick, onSearchClick, isDark, onToggleDark }) {
       >
         <Menu size={22} />
       </button>
-      <h1 className="text-base font-semibold text-gray-900 sm:text-lg dark:text-gray-100">IT Asset Management</h1>
+      <h1 className="text-base font-semibold sm:text-lg">
+        <span className="bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent dark:from-red-400 dark:to-red-600">
+          IT
+        </span>{' '}
+        <span className="text-gray-900 dark:text-gray-100">Asset Management</span>
+      </h1>
 
       <div className="ml-auto flex items-center gap-2">
         <button

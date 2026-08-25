@@ -4,6 +4,7 @@ import { Download, FileUp, Pencil, Plus, Printer, Trash2 } from 'lucide-react';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
 import { MetricCard } from '../components/MetricCard';
+import { PageHeader } from '../components/PageHeader';
 import { TonerInwardFormModal } from '../components/TonerInwardFormModal';
 import { TonerOutwardFormModal } from '../components/TonerOutwardFormModal';
 import { ImportModal } from '../components/ImportModal';
@@ -328,10 +329,7 @@ export function Toners() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">Toner Stock</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Inward (received) and outward (delivered/used) printer toner tracking.</p>
-      </div>
+      <PageHeader icon={Printer} title="Toner Stock" subtitle="Inward (received) and outward (delivered/used) printer toner tracking" accent="purple" />
 
       {stock.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -399,6 +397,7 @@ export function Toners() {
             isLoading={inwardLoading}
             emptyMessage="No inward toner entries yet."
             emptyIcon={Printer}
+            accent="purple"
             onRowClick={setDetailInward}
             selectable
             selectedIds={selectedInwardIds}
@@ -448,6 +447,7 @@ export function Toners() {
             isLoading={outwardLoading}
             emptyMessage="No outward toner entries yet."
             emptyIcon={Printer}
+            accent="purple"
             onRowClick={setDetailOutward}
             selectable
             selectedIds={selectedOutwardIds}
@@ -496,6 +496,7 @@ export function Toners() {
       {detailInward && (
         <DetailModal
           icon={Printer}
+          accent="purple"
           name={detailInward.tonerType || 'Inward Entry'}
           subtitle={detailInward.dateOfOrder}
           onClose={() => setDetailInward(null)}
@@ -520,6 +521,7 @@ export function Toners() {
       {detailOutward && (
         <DetailModal
           icon={Printer}
+          accent="purple"
           name={detailOutward.tonerType || 'Outward Entry'}
           subtitle={detailOutward.deliveredTo}
           onClose={() => setDetailOutward(null)}

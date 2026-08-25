@@ -4,6 +4,7 @@ import { HardDrive, FileCheck2, Archive, AlertTriangle, Database, StickyNote, Pl
 import { MetricCard } from '../components/MetricCard';
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
+import { PageHeader } from '../components/PageHeader';
 import { FilterPillGroup } from '../components/FilterPillGroup';
 import { Tag } from '../components/Tag';
 import { CopyButton } from '../components/CopyButton';
@@ -127,20 +128,20 @@ export function HddInventory() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
-        <div>
-          <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">HDD Inventory</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Centralized inventory and archive of company HDDs, assignments and stored data.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsAddOpen(true)}
-          className="no-print flex w-fit items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-        >
-          <Plus size={16} /> Add HDD
-        </button>
-      </div>
+      <PageHeader
+        icon={HardDrive}
+        title="HDD Inventory"
+        subtitle="Centralized inventory and archive of company HDDs, assignments and stored data"
+        accent="gold"
+        actions={
+          <button
+            onClick={() => setIsAddOpen(true)}
+            className="flex w-fit items-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+          >
+            <Plus size={16} /> Add HDD
+          </button>
+        }
+      />
 
       {stats && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -237,6 +238,7 @@ export function HddInventory() {
               rows={filtered}
               emptyMessage="No HDD records match this filter."
               emptyIcon={HardDrive}
+              accent="gold"
               isLoading={isLoading}
             />
           )}

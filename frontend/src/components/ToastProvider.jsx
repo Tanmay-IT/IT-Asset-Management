@@ -45,7 +45,7 @@ export function ToastProvider({ children }) {
           return (
             <div
               key={t.id}
-              className={`animate-toast-in pointer-events-auto relative flex w-[calc(100vw-2rem)] max-w-sm items-start gap-2.5 overflow-hidden rounded-xl bg-white p-3.5 pr-9 shadow-lg ring-1 dark:bg-gray-800 dark:ring-white/10 ${variant.ring}`}
+              className={`animate-toast-in pointer-events-auto relative flex w-[calc(100vw-2rem)] max-w-sm items-start gap-2.5 overflow-hidden rounded-2xl bg-white p-3.5 pr-9 shadow-2xl ring-1 dark:bg-gray-800 dark:ring-white/10 ${variant.ring}`}
             >
               <span className={`absolute inset-y-0 left-0 w-1 ${variant.bar}`} />
               <Icon size={18} className={`mt-0.5 shrink-0 ${variant.iconColor}`} />

@@ -4,6 +4,7 @@ import { Download, FileUp, Monitor, Pencil, Plus, Trash2, X } from 'lucide-react
 import { DataTable } from '../components/DataTable';
 import { SearchBar } from '../components/SearchBar';
 import { Tag } from '../components/Tag';
+import { PageHeader } from '../components/PageHeader';
 import { ComputerFormModal } from '../components/ComputerFormModal';
 import { ImportModal } from '../components/ImportModal';
 import { DetailModal } from '../components/DetailModal';
@@ -264,33 +265,38 @@ export function Computers() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <h1 className="text-lg font-semibold text-gray-900 sm:text-xl dark:text-gray-100">Computers</h1>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <SearchBar value={search} onChange={setSearch} placeholder="Search device, user, serial..." />
-          <div className="no-print flex flex-wrap gap-2">
-            <ColumnVisibilityMenu columns={TOGGLEABLE_COLUMNS} hiddenKeys={hiddenColumns} onChange={setHiddenColumns} />
-            <button
-              onClick={handleExport}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <Download size={16} /> Export CSV
-            </button>
-            <button
-              onClick={() => setIsImportOpen(true)}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
-            >
-              <FileUp size={16} /> Import Excel
-            </button>
-            <button
-              onClick={() => setFormState({ mode: 'add' })}
-              className="flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-            >
-              <Plus size={16} /> Add Computer
-            </button>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        icon={Monitor}
+        title="Computers"
+        subtitle="Laptops & desktops inventory"
+        accent="blue"
+        actions={
+          <>
+            <SearchBar value={search} onChange={setSearch} placeholder="Search device, user, serial..." />
+            <div className="flex flex-wrap gap-2">
+              <ColumnVisibilityMenu columns={TOGGLEABLE_COLUMNS} hiddenKeys={hiddenColumns} onChange={setHiddenColumns} />
+              <button
+                onClick={handleExport}
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <Download size={16} /> Export CSV
+              </button>
+              <button
+                onClick={() => setIsImportOpen(true)}
+                className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <FileUp size={16} /> Import Excel
+              </button>
+              <button
+                onClick={() => setFormState({ mode: 'add' })}
+                className="flex items-center justify-center gap-1.5 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                <Plus size={16} /> Add Computer
+              </button>
+            </div>
+          </>
+        }
+      />
 
       <div className="no-print flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -404,6 +410,7 @@ export function Computers() {
           isLoading={isLoading}
           emptyMessage="No computers yet. Add one manually or import an Excel sheet."
           emptyIcon={Monitor}
+          accent="blue"
           onRowClick={setDetailComputer}
           selectable
           selectedIds={selectedIds}
@@ -434,6 +441,7 @@ export function Computers() {
       {detailComputer && (
         <DetailModal
           icon={Monitor}
+          accent="blue"
           name={detailComputer.computerName || 'Computer'}
           subtitle={[detailComputer.firstName, detailComputer.lastName].filter(Boolean).join(' ') || 'Unassigned'}
           badge={

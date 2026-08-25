@@ -47,7 +47,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapsed }) {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } ${isCollapsed ? 'w-64 md:w-16' : 'w-64'}`}
       >
-        <div className={`flex items-center border-b border-gray-200 p-4 dark:border-gray-800 ${isCollapsed ? 'md:justify-center md:px-2' : 'justify-between'}`}>
+        <div
+          className={`flex items-center border-b border-gray-200 p-4 dark:border-gray-800 ${isCollapsed ? 'md:justify-center md:px-2' : 'justify-between'}`}
+        >
           <div className={`flex items-center gap-2.5 ${isCollapsed ? 'md:hidden' : ''}`}>
             <img src="/igl-logo.png" alt="IGL" className="h-9 w-9 shrink-0" />
             <div className="leading-tight">
